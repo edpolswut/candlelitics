@@ -1,14 +1,27 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Home from './pages/Home';
+import About from './pages/About';
+import Dashboards from './pages/Dashboards';
 import './App.css';
-import DashboardsList from './Components/DashboardsList';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        {/* <img src={logo} className="App-logo" alt="logo" /> */}
-        <DashboardsList/>
-      </header>
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            
+            <Route index element={<Home />} />
+            
+            <Route path="sobre" element={<About />} />
+            <Route path="dashboards" element={<Dashboards />} />
+            
+          </Route>
+        </Routes>
+      </div>
+    </Router>
   );
 }
 

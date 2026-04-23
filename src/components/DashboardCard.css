@@ -1,0 +1,29 @@
+.dashboard-cell {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  aspect-ratio: 5 / 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.dashboard-cell:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.dashboard-content h2 {
+  margin: 0;
+  font-size: 1.4em;
+  color: #2c3e50;
+}
+
+.dashboard-cell.dragging {
+  opacity: 0.4;
+  border: 2px dashed #0056b3;
+  transform: scale(0.98);
+  box-shadow: none;
+}

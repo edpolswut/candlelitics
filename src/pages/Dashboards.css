@@ -1,0 +1,33 @@
+.dashboards-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.add-button {
+  margin-bottom: 24px;
+  padding: 12px 24px;
+  background-color: #0056b3;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-button:hover {
+  background-color: #004494;
+}
+
+.dashboards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+.empty-message {
+  color: #666;
+  font-style: italic;
+}
