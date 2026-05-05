@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
+import CandlestickChart from './Graph';
 import './DashboardCard.css';
 
 function DashboardCard({ id, title, index, moveDashboard }) {
@@ -37,6 +38,8 @@ function DashboardCard({ id, title, index, moveDashboard }) {
     >
       <div className="dashboard-content">
         <h2>{title}</h2>
+
+        <CandlestickChart />
       </div>
     </div>
   );

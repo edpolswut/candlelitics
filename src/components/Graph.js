@@ -6,7 +6,8 @@ const CandlestickChart = () => {
   const [options] = useState({
     chart: {
       type: 'candlestick',
-      height: 350,
+      height: 'auto',
+      width: '100%',
       toolbar: {
         show: true // Mostra as opções de zoom e download
       }
@@ -53,14 +54,15 @@ const CandlestickChart = () => {
   }]);
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+    <>
       <Chart 
         options={options} 
         series={series} 
         type="candlestick" 
-        height={350} 
+        height={'auto'} 
+        width={'100%'}
       />
-    </div>
+    </>
   );
 };
 
