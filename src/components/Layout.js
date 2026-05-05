@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import './Layout.css';
-import logo from '../img/candlelitics.png';
+import logo from '../img/candleliticsTextLogo.png';
 
 function Layout() {
   return (
