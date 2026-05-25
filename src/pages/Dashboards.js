@@ -17,6 +17,30 @@ function Dashboards() {
   // Hook que substitui o WidthProvider: calcula a largura da tela menos o padding do Layout (80px)
   const [width, setWidth] = useState(window.innerWidth - 80);
 
+  const handleCreateDashboard = (config) => {
+    const novoId = `widget-${Date.now()}`;
+
+    // AQUI ESTÁ A CORREÇÃO: Usando 'ativos' (como array) e 'tipo_grafico'
+    const novoCard = {
+      id: novoId,
+      ativos: [config.stockCode.toUpperCase()], 
+      tipo_grafico: config.chartType,           
+      title: `${config.stockCode.toUpperCase()} - ${config.chartType}`
+    };
+
+    setWidgets((prevCards) => [...prevCards, novoCard]);
+
+    setLayouts((prevLayouts) => ({
+      ...prevLayouts,
+      lg: [
+        ...(prevLayouts.lg || []),
+        { i: novoId, x: 0, y: Infinity, w: 4, h: 3 }
+      ]
+    }));
+
+    setIsModalOpen(false);
+  };
+
   useEffect(() => {
     const layoutInicial = dbMock.layouts_salvos[0].grid_config;
     const widgetsIniciais = dbMock.widgets;
@@ -82,8 +106,9 @@ function Dashboards() {
       </button>
       
       <CreateDashboardModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onConfirm={handleCreateDashboard} 
       />
     </div>
   );

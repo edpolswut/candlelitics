@@ -4,6 +4,8 @@ import { Outlet, Link } from 'react-router-dom';
 import textLogoLight from '../img/candleliticsTextLogo.png';
 import textLogoDark from '../img/candleliticsTextLogo.png';
 import './Layout.css';
+import './AuthModal.css';
+import AuthModal from './AuthModal';
 
 function Layout() {
   const [isDarkTheme, setIsDarkTheme] = useState(true);
@@ -18,6 +20,9 @@ function Layout() {
     }
   }, [isDarkTheme]);
 
+
+  const [modalType, setModalType] = useState(null);
+
   return (
     <>
       <header className="navbar">
@@ -27,8 +32,10 @@ function Layout() {
         
         <div className="nav-actions">
           <Link to="/dashboards" className="nav-link">Meu Dashboard</Link>
-          <button className="btn-nav btn-login">Entrar</button>
-          <button className="btn-nav btn-register">Registrar</button>
+          <div className="auth-buttons">
+            <button className="btn-login" onClick={() => setModalType('login')}>Login</button>
+            <button className="btn-register" onClick={() => setModalType('register')}>Cadastrar</button>
+          </div>
           
           <button 
             className="theme-toggle" 
@@ -41,9 +48,16 @@ function Layout() {
       </header>
 
       <main className="main-content">
-        {/* Pass the theme state to child routes (like Home) using context */}
         <Outlet context={{ isDarkTheme }} />
       </main>
+
+      {modalType && (
+        <AuthModal 
+          type={modalType} 
+          isDarkTheme={isDarkTheme} 
+          onClose={() => setModalType(null)}
+        />
+      )}
     </>
   );
 }
