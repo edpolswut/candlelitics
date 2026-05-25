@@ -142,6 +142,13 @@
   min-height: 0; /* IMPRESCINDÍVEL: Evita que o gráfico quebre a proporção */
 }
 
+/* Sobrescreve as cores da grid e dos ticks do gráfico para respeitar o tema (claro/escuro) */
+.card-body .apexcharts-grid line,
+.card-body .apexcharts-xaxis-tick,
+.card-body .apexcharts-yaxis-tick {
+  stroke: var(--border-color) !important;
+}
+
 /* Garante que o canvas do ApexCharts respeite o pai */
 .graph-container, .apexcharts-canvas {
   height: 100% !important;

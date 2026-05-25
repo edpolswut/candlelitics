@@ -9,6 +9,8 @@
   --border-hover: #d0dce6;
   --accent-primary: #00b545;
   --accent-secondary: #ef403c;
+  --accent-primary-dark: #009e3f;
+  --accent-secondary-dark: #d7372a;
   --drag-handle-bg: #f0f2f5;
 }
 
@@ -22,6 +24,8 @@
   --border-hover: #3d4551;
   --accent-primary: #00b545;
   --accent-secondary: #ef403c;
+  --accent-primary-dark: #009e3f;
+  --accent-secondary-dark: #d7372a;
   --drag-handle-bg: #181b20;
 }
 

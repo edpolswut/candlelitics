@@ -37,9 +37,9 @@
 }
 
 .nav-link {
-  color: white;
+  color: var(--text-primary);
   text-decoration: none;
-
+  cursor: pointer;
   font-weight: 500;
   font-size: 1.1em;
 
@@ -77,7 +77,7 @@
 
 .btn-register {
   background-color: var(--accent-primary);
-  color: white;
+  color: var(--text-primary);
 }
 
 .btn-register:hover {
@@ -138,22 +138,22 @@
 .btn-login {
   background: transparent;
 
-  border: 2px solid #61dafb;
+  border: 2px solid var(--accent-primary);
 
-  color: #61dafb;
+  color: var(--accent-primary);
 }
 
 .btn-login:hover {
-  background-color: #61dafb;
-  color: #1f2228;
+  background-color: var(--bg-card-hover);
+  color: var(--text-primary);
 }
 
 /* CADASTRO */
 
 .btn-register {
-  background: linear-gradient(135deg, #0056b3, #0047a3);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
 
-  color: white;
+  color: #e1e7ef;
 
   box-shadow: 0 4px 12px rgba(0, 86, 179, 0.3);
 }
@@ -163,7 +163,7 @@
 
   box-shadow: 0 6px 16px rgba(0, 86, 179, 0.4);
 
-  background: linear-gradient(135deg, #0047a3, #003d8f);
+  background: linear-gradient(135deg, var(--accent-primary-dark), var(--accent-secondary-dark));
 }
 
 /* RESPONSIVIDADE */

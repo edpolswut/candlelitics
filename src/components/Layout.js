@@ -2,9 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import textLogoLight from '../img/candleliticsTextLogo.png';
-import textLogoDark from '../img/candleliticsTextLogo.png';
+import textLogoDark from '../img/candleliticsTextLogoDark.png';
 import './Layout.css';
-import './AuthModal.css';
 import AuthModal from './AuthModal';
 
 function Layout() {

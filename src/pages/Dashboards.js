@@ -34,7 +34,8 @@ function Dashboards() {
       ...prevLayouts,
       lg: [
         ...(prevLayouts.lg || []),
-        { i: novoId, x: 0, y: Infinity, w: 4, h: 3 }
+        { i: novoId, x: 0, y: Infinity, w: 4, h: 3, 
+          resizeHandles: ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne'] }
       ]
     }));
 
@@ -81,8 +82,11 @@ function Dashboards() {
           resizeHandles={["se", "sw", "ne", "nw", "e", "w", "n", "s"]}
         >
           {widgets.map((widget) => {
-            // Buscamos a configuração inicial de layout deste widget para forçar a renderização correta
-            const layoutItem = layouts.lg?.find(l => l.i === widget.id) || { x: 0, y: 0, w: 4, h: 3 };
+            // Injetamos explicitamente os handles em cada item do layout
+            const layoutItem = {
+              ...(layouts.lg?.find(l => l.i === widget.id) || { x: 0, y: 0, w: 4, h: 3 }),
+              resizeHandles: ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']
+            };
 
             return (
               <div key={widget.id} data-grid={layoutItem}>
