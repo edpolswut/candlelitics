@@ -5,7 +5,7 @@ function AuthModal({ type, onClose }) {
 
   const [registerData, setRegisterData] = useState({
     login: '',
-    email: '', 
+    email: '',
     senha: '',
     confirmarSenha: '',
     imagem: null,
@@ -34,25 +34,82 @@ function AuthModal({ type, onClose }) {
     }));
   };
 
-  const handleRegisterSubmit = (e) => {
-  e.preventDefault();
-
-  if (registerData.senha !== registerData.confirmarSenha) {
-    alert('As senhas não coincidem!');
-    return;
-  }
-
-  console.log('Cadastro:', registerData);
-
-  onClose();
-  };
-
-  const handleLoginSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
 
-    console.log('Login:', loginData);
+    if (registerData.senha !== registerData.confirmarSenha) {
+      alert('As senhas não coincidem!');
+      return;
+    }
 
-    onClose();
+    try {
+
+      const resposta = await fetch('http://localhost:3001/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          login: registerData.login,
+          email: registerData.email,
+          senha: registerData.senha
+        })
+      });
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        alert(dados.erro);
+        return;
+      }
+
+      alert('Cadastro realizado com sucesso');
+
+      onClose();
+
+    } catch (err) {
+
+      console.log(err);
+
+      alert('Erro ao conectar com o servidor');
+    }
+  };
+
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+
+      const resposta = await fetch('http://localhost:3001/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: loginData.email,
+          senha: loginData.senha
+        })
+      });
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        alert(dados.erro);
+        return;
+      }
+
+      localStorage.setItem('token', dados.token);
+
+      alert('Login realizado com sucesso');
+
+      onClose();
+
+    } catch (err) {
+
+      console.log(err);
+
+      alert('Erro ao conectar com o servidor');
+    }
   };
 
   return (
@@ -124,19 +181,19 @@ function AuthModal({ type, onClose }) {
                 />
               </div>
 
-                <div className="form-group">
-                  <label>Confirmar Senha</label>
+              <div className="form-group">
+                <label>Confirmar Senha</label>
 
-                  <input
-                    type="password"
-                    name="confirmarSenha"
-                    className="form-input"
-                    placeholder="Confirme sua senha"
-                    value={registerData.confirmarSenha}
-                    onChange={handleRegisterChange}
-                    required
-                    />
-                </div>
+                <input
+                  type="password"
+                  name="confirmarSenha"
+                  className="form-input"
+                  placeholder="Confirme sua senha"
+                  value={registerData.confirmarSenha}
+                  onChange={handleRegisterChange}
+                  required
+                />
+              </div>
 
               <div className="form-group">
                 <label>Imagem de Perfil</label>
