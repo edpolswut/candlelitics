@@ -6,59 +6,162 @@ import 'react-resizable/css/styles.css';
 import DashboardCard from '../components/DashboardCard';
 import CreateDashboardModal from '../components/CreateDashboardModal';
 import './Dashboards.css';
-import dbMock from '../data/db.json';
 
 function Dashboards() {
   const [widgets, setWidgets] = useState([]);
   const [layouts, setLayouts] = useState({ lg: [] });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [anyFullscreen, setAnyFullscreen] = useState(false);
-  
-  // Hook que substitui o WidthProvider: calcula a largura da tela menos o padding do Layout (80px)
   const [width, setWidth] = useState(window.innerWidth - 80);
 
-  const handleCreateDashboard = (config) => {
-    const novoId = `widget-${Date.now()}`;
+  const carregarCards = async () => {
+    try {
+      const token = localStorage.getItem('token');
 
-    // AQUI ESTÁ A CORREÇÃO: Usando 'ativos' (como array) e 'tipo_grafico'
-    const novoCard = {
-      id: novoId,
-      ativos: [config.stockCode.toUpperCase()], 
-      tipo_grafico: config.chartType,           
-      title: `${config.stockCode.toUpperCase()} - ${config.chartType}`
-    };
+      if (!token) {
+        alert('Você precisa estar logado para ver seus dashboards.');
+        return;
+      }
 
-    setWidgets((prevCards) => [...prevCards, novoCard]);
+      const resposta = await fetch('http://localhost:3001/api/dashboards/principal/cards', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
 
-    setLayouts((prevLayouts) => ({
-      ...prevLayouts,
-      lg: [
-        ...(prevLayouts.lg || []),
-        { i: novoId, x: 0, y: Infinity, w: 4, h: 3, 
-          resizeHandles: ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne'] }
-      ]
-    }));
+      const dados = await resposta.json();
 
-    setIsModalOpen(false);
+      if (!resposta.ok) {
+        alert(dados.erro);
+        return;
+      }
+
+      const widgetsBanco = dados.map((card) => ({
+        id: String(card.Id),
+        ativos: [card.Ticker],
+        tipo_grafico: card.TipoGrafico,
+        title: `${card.Ticker} - ${card.TipoGrafico}`
+      }));
+
+      const layoutBanco = dados.map((card) => ({
+        i: String(card.Id),
+        x: card.X,
+        y: card.Y,
+        w: card.W,
+        h: card.H
+      }));
+
+      setWidgets(widgetsBanco);
+      setLayouts({ lg: layoutBanco });
+
+    } catch (err) {
+      console.log(err);
+      alert('Erro ao carregar cards');
+    }
+  };
+
+  const handleCreateDashboard = async (config) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        alert('Você precisa estar logado para criar cards.');
+        return;
+      }
+
+      const resposta = await fetch('http://localhost:3001/api/dashboards/principal/cards', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ticker: config.stockCode.toUpperCase(),
+          tipoGrafico: config.chartType,
+          x: 0,
+          y: 0,
+          w: 4,
+          h: 3
+        })
+      });
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        alert(dados.erro);
+        return;
+      }
+
+      const novoCard = {
+        id: String(dados.id),
+        ativos: [dados.ticker],
+        tipo_grafico: dados.tipoGrafico,
+        title: `${dados.ticker} - ${dados.tipoGrafico}`
+      };
+
+      setWidgets((prevCards) => [...prevCards, novoCard]);
+
+      setLayouts((prevLayouts) => ({
+        ...prevLayouts,
+        lg: [
+          ...(prevLayouts.lg || []),
+          {
+            i: String(dados.id),
+            x: dados.x,
+            y: dados.y,
+            w: dados.w,
+            h: dados.h
+          }
+        ]
+      }));
+
+      setIsModalOpen(false);
+
+    } catch (err) {
+      console.log(err);
+      alert('Erro ao criar card');
+    }
+  };
+
+  const salvarLayout = async (layout) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      if (!token) return;
+
+      for (const item of layout) {
+        await fetch(`http://localhost:3001/api/cards/${item.i}/layout`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            x: item.x,
+            y: item.y,
+            w: item.w,
+            h: item.h
+          })
+        });
+      }
+
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   useEffect(() => {
-    const layoutInicial = dbMock.layouts_salvos[0].grid_config;
-    const widgetsIniciais = dbMock.widgets;
-    
-    setLayouts({ lg: layoutInicial });
-    setWidgets(widgetsIniciais);
+    carregarCards();
 
-    // Atualiza a largura da grade automaticamente se o usuário redimensionar a janela
     const handleResize = () => setWidth(window.innerWidth - 80);
     window.addEventListener('resize', handleResize);
-    
+
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const onLayoutChange = (layout, allLayouts) => {
     setLayouts(allLayouts);
-    console.log("Novo layout guardado na memória:", layout);
+    salvarLayout(layout);
   };
 
   return (
@@ -82,15 +185,16 @@ function Dashboards() {
           resizeHandles={["se", "sw", "ne", "nw", "e", "w", "n", "s"]}
         >
           {widgets.map((widget) => {
-            // Injetamos explicitamente os handles em cada item do layout
-            const layoutItem = {
-              ...(layouts.lg?.find(l => l.i === widget.id) || { x: 0, y: 0, w: 4, h: 3 }),
-              resizeHandles: ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']
+            const layoutItem = layouts.lg?.find((l) => l.i === widget.id) || {
+              x: 0,
+              y: 0,
+              w: 4,
+              h: 3
             };
 
             return (
               <div key={widget.id} data-grid={layoutItem}>
-                <DashboardCard 
+                <DashboardCard
                   id={widget.id}
                   widgetConfig={widget}
                   onFullscreenChange={setAnyFullscreen}
@@ -101,18 +205,18 @@ function Dashboards() {
         </Responsive>
       )}
 
-      <button 
-        className="fab-button" 
+      <button
+        className="fab-button"
         onClick={() => setIsModalOpen(true)}
         title="Criar Novo Dashboard"
       >
         +
       </button>
-      
-      <CreateDashboardModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onConfirm={handleCreateDashboard} 
+
+      <CreateDashboardModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleCreateDashboard}
       />
     </div>
   );
