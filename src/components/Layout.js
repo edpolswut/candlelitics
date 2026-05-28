@@ -1,6 +1,5 @@
-// src/components/Layout.js
 import React, { useState, useEffect } from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useNavigate } from 'react-router-dom';
 import textLogoLight from '../img/candleliticsTextLogo.png';
 import textLogoDark from '../img/candleliticsTextLogoDark.png';
 import './Layout.css';
@@ -9,8 +8,15 @@ import AuthModal from './AuthModal';
 function Layout() {
   const [isDarkTheme, setIsDarkTheme] = useState(true);
   const currentLogo = isDarkTheme ? textLogoDark : textLogoLight;
+  
+  const [modalType, setModalType] = useState(null);
+  
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  }); 
+  const navigate = useNavigate();
 
-  // Toggle the data-theme attribute on the body whenever the state changes
   useEffect(() => {
     if (isDarkTheme) {
       document.body.setAttribute('data-theme', 'dark');
@@ -19,8 +25,17 @@ function Layout() {
     }
   }, [isDarkTheme]);
 
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/');
+  };
 
-  const [modalType, setModalType] = useState(null);
+  const handleLoginSuccess = (userData) => {
+    setUser(userData);
+    setModalType(null);
+  };
 
   return (
     <>
@@ -30,11 +45,28 @@ function Layout() {
         </div>
         
         <div className="nav-actions">
-          <Link to="/dashboards" className="nav-link">Meu Dashboard</Link>
-          <div className="auth-buttons">
-            <button className="btn-login" onClick={() => setModalType('login')}>Login</button>
-            <button className="btn-register" onClick={() => setModalType('register')}>Cadastrar</button>
-          </div>
+          {user && (
+            <Link to="/dashboards" className="nav-link">Meu Dashboard</Link>
+          )}
+
+          {user ? (
+            <div className="user-profile">
+              <img 
+                src={user.photoUrl}
+                alt="Foto do usuário" 
+                className="user-photo" 
+              />
+              <span className="user-name">{user.username}</span>
+              <button className="btn-logout" onClick={handleLogout}>
+                <i className="fas fa-sign-out-alt"></i>
+              </button>
+            </div>
+          ) : (
+            <div className="auth-buttons">
+              <button className="btn-login" onClick={() => setModalType('login')}>Login</button>
+              <button className="btn-register" onClick={() => setModalType('register')}>Cadastrar</button>
+            </div>
+          )}
           
           <button 
             className="theme-toggle" 
@@ -47,7 +79,7 @@ function Layout() {
       </header>
 
       <main className="main-content">
-        <Outlet context={{ isDarkTheme }} />
+        <Outlet context={{ isDarkTheme, user }} />
       </main>
 
       {modalType && (
@@ -55,6 +87,7 @@ function Layout() {
           type={modalType} 
           isDarkTheme={isDarkTheme} 
           onClose={() => setModalType(null)}
+          onLoginSuccess={handleLoginSuccess} 
         />
       )}
     </>

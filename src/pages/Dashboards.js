@@ -123,6 +123,40 @@ function Dashboards() {
     }
   };
 
+  const handleDeleteDashboard = async (id) => {
+    if (!window.confirm('Tem a certeza que deseja apagar este dashboard?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const resposta = await fetch(`http://localhost:3001/api/cards/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!resposta.ok) {
+        const dados = await resposta.json();
+        alert(dados.erro || 'Erro ao apagar o card');
+        return;
+      }
+
+      setWidgets((prevWidgets) => prevWidgets.filter((w) => w.id !== id));
+      setLayouts((prevLayouts) => ({
+        ...prevLayouts,
+        lg: prevLayouts.lg ? prevLayouts.lg.filter((l) => l.i !== id) : []
+      }));
+
+    } catch (err) {
+      console.log(err);
+      alert('Erro ao comunicar com o servidor');
+    }
+  };
+
   const salvarLayout = async (layout) => {
     try {
       const token = localStorage.getItem('token');
@@ -198,6 +232,7 @@ function Dashboards() {
                   id={widget.id}
                   widgetConfig={widget}
                   onFullscreenChange={setAnyFullscreen}
+                  onDelete={handleDeleteDashboard}
                 />
               </div>
             );

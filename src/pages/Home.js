@@ -1,4 +1,3 @@
-// src/pages/Home.js
 import React, { useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import logoLight from '../img/candleliticsTextLogo.png';
@@ -141,7 +140,6 @@ function Home() {
   return (
     <div className="home-page-wrapper">
       
-      {/* Container exatamente igual ao seu código original */}
       <section className="home-hero-container" style={{ position: 'relative', overflow: 'hidden' }}>
         
         <div className="background-chart-wrapper" style={{ opacity: 0.6 }}>

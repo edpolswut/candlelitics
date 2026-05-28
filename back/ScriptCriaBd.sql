@@ -8,7 +8,7 @@ CREATE TABLE Usuario (
     Login VARCHAR(40) NOT NULL UNIQUE,
     Email VARCHAR(150) NOT NULL UNIQUE,
     SenhaHash VARCHAR(255) NOT NULL,
-    Img LONGBLOB
+    Imagem LONGBLOB
 );
 
 CREATE TABLE Dashboard (

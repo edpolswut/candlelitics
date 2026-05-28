@@ -11,7 +11,10 @@ const auth = require('./middleware/auth');
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+
+app.use(express.json({ limit: '10mb' }));
+
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.get('/', (req, res) => {
     res.send('Backend funcionando');
@@ -19,13 +22,13 @@ app.get('/', (req, res) => {
 
 app.post('/api/register', async (req, res) => {
     try {
-        const { login, email, senha } = req.body;
+        const { login, email, senha, imagem } = req.body;
 
         const senhaHash = await bcrypt.hash(senha, 10);
 
         const [usuarioCriado] = await db.query(
-            'INSERT INTO Usuario (Login, Email, SenhaHash) VALUES (?, ?, ?)',
-            [login, email, senhaHash]
+            'INSERT INTO Usuario (Login, Email, SenhaHash, Imagem) VALUES (?, ?, ?, ?)',
+            [login, email, senhaHash, imagem]
         );
 
         await db.query(
@@ -86,9 +89,13 @@ app.post('/api/login', async (req, res) => {
             }
         );
 
+        const imagemBase64 = usuario.Imagem ? usuario.Imagem.toString('utf-8') : null;
+
         res.json({
             mensagem: 'Login realizado com sucesso',
-            token
+            token,
+            login: usuario.Login,
+            imagem: imagemBase64
         });
 
     } catch (err) {

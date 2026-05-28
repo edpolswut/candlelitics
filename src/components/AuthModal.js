@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './AuthModal.css';
 
-function AuthModal({ type, onClose, isDarkTheme }) {
+function AuthModal({ type, onClose, isDarkTheme, onLoginSuccess }) {
 
   const [registerData, setRegisterData] = useState({
     login: '',
@@ -9,6 +9,7 @@ function AuthModal({ type, onClose, isDarkTheme }) {
     senha: '',
     confirmarSenha: '',
     imagem: null,
+    fileName: '',
   });
 
   const [loginData, setLoginData] = useState({
@@ -19,10 +20,25 @@ function AuthModal({ type, onClose, isDarkTheme }) {
   const handleRegisterChange = (e) => {
     const { name, value, files } = e.target;
 
-    setRegisterData((prev) => ({
-      ...prev,
-      [name]: files ? files[0] : value,
-    }));
+    if (files && files[0]) {
+      const file = files[0];
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        setRegisterData((prev) => ({
+          ...prev,
+          [name]: reader.result,
+          fileName: file.name
+        }));
+      };
+
+      reader.readAsDataURL(file);
+    } else {
+      setRegisterData((prev) => ({
+        ...prev,
+        [name]: files ? files[0] : value,
+      }));
+    }
   };
 
   const handleLoginChange = (e) => {
@@ -43,7 +59,6 @@ function AuthModal({ type, onClose, isDarkTheme }) {
     }
 
     try {
-
       const resposta = await fetch('http://localhost:3001/api/register', {
         method: 'POST',
         headers: {
@@ -52,7 +67,8 @@ function AuthModal({ type, onClose, isDarkTheme }) {
         body: JSON.stringify({
           login: registerData.login,
           email: registerData.email,
-          senha: registerData.senha
+          senha: registerData.senha,
+          imagem: registerData.imagem
         })
       });
 
@@ -64,13 +80,10 @@ function AuthModal({ type, onClose, isDarkTheme }) {
       }
 
       alert('Cadastro realizado com sucesso');
-
       onClose();
 
     } catch (err) {
-
       console.log(err);
-
       alert('Erro ao conectar com o servidor');
     }
   };
@@ -79,7 +92,6 @@ function AuthModal({ type, onClose, isDarkTheme }) {
     e.preventDefault();
 
     try {
-
       const resposta = await fetch('http://localhost:3001/api/login', {
         method: 'POST',
         headers: {
@@ -99,15 +111,23 @@ function AuthModal({ type, onClose, isDarkTheme }) {
       }
 
       localStorage.setItem('token', dados.token);
-
       alert('Login realizado com sucesso');
+
+      const dadosDoUtilizador = {
+        username: dados.login || loginData.email.split('@')[0],
+        photoUrl: dados.imagem || null
+      };
+
+      localStorage.setItem('user', JSON.stringify(dadosDoUtilizador));
+
+      if (onLoginSuccess) {
+        onLoginSuccess(dadosDoUtilizador);
+      }
 
       onClose();
 
     } catch (err) {
-
       console.log(err);
-
       alert('Erro ao conectar com o servidor');
     }
   };
@@ -212,7 +232,7 @@ function AuthModal({ type, onClose, isDarkTheme }) {
                   <label htmlFor="avatar-upload" className="custom-file-label">
                     <i className="fas fa-cloud-upload-alt"></i>
                     <span className="file-name-text">
-                      {registerData.imagem ? registerData.imagem.name : 'Clique para selecionar sua foto'}
+                      {registerData.fileName ? registerData.fileName : 'Clique para selecionar sua foto'}
                     </span>
                   </label>
                 </div>
