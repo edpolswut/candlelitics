@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import './AuthModal.css';
 
-function AuthModal({ type, onClose }) {
+function AuthModal({ type, onClose, isDarkTheme, onLoginSuccess }) {
 
   const [registerData, setRegisterData] = useState({
     login: '',
-    email: '', 
+    email: '',
     senha: '',
     confirmarSenha: '',
     imagem: null,
+    fileName: '',
   });
 
   const [loginData, setLoginData] = useState({
@@ -19,10 +20,25 @@ function AuthModal({ type, onClose }) {
   const handleRegisterChange = (e) => {
     const { name, value, files } = e.target;
 
-    setRegisterData((prev) => ({
-      ...prev,
-      [name]: files ? files[0] : value,
-    }));
+    if (files && files[0]) {
+      const file = files[0];
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        setRegisterData((prev) => ({
+          ...prev,
+          [name]: reader.result,
+          fileName: file.name
+        }));
+      };
+
+      reader.readAsDataURL(file);
+    } else {
+      setRegisterData((prev) => ({
+        ...prev,
+        [name]: files ? files[0] : value,
+      }));
+    }
   };
 
   const handleLoginChange = (e) => {
@@ -34,35 +50,99 @@ function AuthModal({ type, onClose }) {
     }));
   };
 
-  const handleRegisterSubmit = (e) => {
-  e.preventDefault();
-
-  if (registerData.senha !== registerData.confirmarSenha) {
-    alert('As senhas não coincidem!');
-    return;
-  }
-
-  console.log('Cadastro:', registerData);
-
-  onClose();
-  };
-
-  const handleLoginSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
 
-    console.log('Login:', loginData);
+    if (registerData.senha !== registerData.confirmarSenha) {
+      alert('As senhas não coincidem!');
+      return;
+    }
 
-    onClose();
+    try {
+      const resposta = await fetch('http://localhost:3001/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          login: registerData.login,
+          email: registerData.email,
+          senha: registerData.senha,
+          imagem: registerData.imagem
+        })
+      });
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        alert(dados.erro);
+        return;
+      }
+
+      alert('Cadastro realizado com sucesso');
+      onClose();
+
+    } catch (err) {
+      console.log(err);
+      alert('Erro ao conectar com o servidor');
+    }
+  };
+
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const resposta = await fetch('http://localhost:3001/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: loginData.email,
+          senha: loginData.senha
+        })
+      });
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        alert(dados.erro);
+        return;
+      }
+
+      localStorage.setItem('token', dados.token);
+      alert('Login realizado com sucesso');
+
+      const dadosDoUtilizador = {
+        username: dados.login || loginData.email.split('@')[0],
+        photoUrl: dados.imagem || null
+      };
+
+      localStorage.setItem('user', JSON.stringify(dadosDoUtilizador));
+
+      if (onLoginSuccess) {
+        onLoginSuccess(dadosDoUtilizador);
+      }
+
+      onClose();
+
+    } catch (err) {
+      console.log(err);
+      alert('Erro ao conectar com o servidor');
+    }
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
         className="modal-content"
+        data-theme={isDarkTheme ? 'dark' : 'light'}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
           <h2>
+            <i className={`fas ${type === 'login' ? 'fa-sign-in-alt' : 'fa-user-plus'}`}></i>
+            {' '}
             {type === 'login'
               ? 'Entrar na Conta'
               : 'Criar Conta'}
@@ -124,30 +204,38 @@ function AuthModal({ type, onClose }) {
                 />
               </div>
 
-                <div className="form-group">
-                  <label>Confirmar Senha</label>
+              <div className="form-group">
+                <label>Confirmar Senha</label>
 
-                  <input
-                    type="password"
-                    name="confirmarSenha"
-                    className="form-input"
-                    placeholder="Confirme sua senha"
-                    value={registerData.confirmarSenha}
-                    onChange={handleRegisterChange}
-                    required
-                    />
-                </div>
+                <input
+                  type="password"
+                  name="confirmarSenha"
+                  className="form-input"
+                  placeholder="Confirme sua senha"
+                  value={registerData.confirmarSenha}
+                  onChange={handleRegisterChange}
+                  required
+                />
+              </div>
 
               <div className="form-group">
                 <label>Imagem de Perfil</label>
-
-                <input
-                  type="file"
-                  name="imagem"
-                  className="form-input"
-                  accept="image/*"
-                  onChange={handleRegisterChange}
-                />
+                <div className="file-input-wrapper">
+                  <input
+                    type="file"
+                    name="imagem"
+                    id="avatar-upload"
+                    className="hidden-file-input"
+                    accept="image/*"
+                    onChange={handleRegisterChange}
+                  />
+                  <label htmlFor="avatar-upload" className="custom-file-label">
+                    <i className="fas fa-cloud-upload-alt"></i>
+                    <span className="file-name-text">
+                      {registerData.fileName ? registerData.fileName : 'Clique para selecionar sua foto'}
+                    </span>
+                  </label>
+                </div>
               </div>
 
               <div className="modal-footer">

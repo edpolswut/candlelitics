@@ -1,0 +1,33 @@
+DROP DATABASE IF EXISTS Candlelitics;
+
+CREATE DATABASE IF NOT EXISTS Candlelitics;
+USE Candlelitics;
+
+CREATE TABLE Usuario (
+    Id_Usuario INT AUTO_INCREMENT PRIMARY KEY,
+    Login VARCHAR(40) NOT NULL UNIQUE,
+    Email VARCHAR(150) NOT NULL UNIQUE,
+    SenhaHash VARCHAR(255) NOT NULL,
+    Imagem LONGBLOB
+);
+
+CREATE TABLE Dashboard (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Id_Usuario INT NOT NULL,
+    Nome VARCHAR(40) NOT NULL,
+    FOREIGN KEY (Id_Usuario) REFERENCES Usuario(Id_Usuario)
+);
+
+CREATE TABLE Cards (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Id_Dashboard INT NOT NULL,
+    Ticker VARCHAR(20) NOT NULL,
+    TipoGrafico VARCHAR(30) NOT NULL,
+    X INT NOT NULL,
+    Y INT NOT NULL,
+    W INT NOT NULL,
+    H INT NOT NULL,
+    FOREIGN KEY (Id_Dashboard) REFERENCES Dashboard(Id)
+);
+
+select * from Cards;

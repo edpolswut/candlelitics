@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Chart from 'react-apexcharts';
 
-// 1. Adicionamos a prop onMetadataLoaded aqui
 const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period = '1M' }) => {
   const chartType = config.chartType || 'candlestick';
   
@@ -10,20 +9,16 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
   const [error, setError] = useState(null);
   const [currency, setCurrency] = useState('BRL');
   
-  // Esses estados locais (logoUrl, stockName) deixaram de ser estritamente necessários 
-  // para renderização aqui dentro, mas mantivemos para manter a sua lógica intacta.
   const [logoUrl, setLogoUrl] = useState(null);
   const [stockName, setStockName] = useState(Name);
   
   const API_KEY = 'ie2zCfzxZAY3SysfiKnZM9';
 
-  // Fetch de dados da Brapi API
   useEffect(() => {
     const fetchStockData = async () => {
       try {
         setLoading(true);
         
-        // 1. Mapeamento do Período (Botão -> Brapi)
         let range = '1mo';
         let interval = '1d';
         
@@ -39,9 +34,8 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
 
         const stockCode = Name.includes('.') ? Name : `${Name}.SA`;
         
-        // 2. URL com os parâmetros históricos
         const url = `https://brapi.dev/api/quote/${stockCode}?range=${range}&interval=${interval}&token=${API_KEY}`;
-        console.log('Fazendo fetch real para:', url);
+        console.log('Fetch para:', url);
         
         const response = await fetch(url);
         
@@ -65,13 +59,11 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
             });
           }
           
-          // 3. Processamento dos dados reais
           if (stock.historicalDataPrice && stock.historicalDataPrice.length > 0) {
             const chartData = stock.historicalDataPrice.map(item => {
               const dateObj = new Date(item.date * 1000);
               let dateLabel = '';
               
-              // Formata a data dependendo do período escolhido para não poluir o eixo X
               if (period === '1D') {
                 dateLabel = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
               } else if (period === '1S') {
@@ -83,7 +75,7 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
               }
 
               return {
-                x: dateLabel, // A mágica: passamos a string formatada em vez do timestamp
+                x: dateLabel,
                 y: [
                   parseFloat(item.open?.toFixed(2) || 0),
                   parseFloat(item.high?.toFixed(2) || 0),
@@ -95,7 +87,6 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
             
             setRawData(chartData);
           } else {
-            // Caso a ação seja muito recente ou não tenha dados no período
             setRawData([]); 
           }
           
@@ -121,10 +112,8 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
 
     const formattedData = rawData.map(item => {
       if (chartType === 'candlestick') {
-        // Vela precisa dos 4 valores: [Open, High, Low, Close]
         return { x: item.x, y: item.y }; 
       } else {
-        // Linha/Área precisa de apenas 1 valor. Vamos usar o Close (índice 3 do array)
         return { x: item.x, y: item.y[3] }; 
       }
     });
@@ -152,10 +141,9 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
           type: 'xy'
         }
       },
-      // 3. O BLOCO DE TITLE FOI TOTALMENTE REMOVIDO DAQUI
       xaxis: {
-        type: 'category', // Adeus buracos! Agora as velas ficam coladas umas nas outras.
-        tickAmount: 6,    // Limita a exibição a 6 rótulos no eixo X para não encavalar
+        type: 'category',
+        tickAmount: 6,
         tickPlacement: 'on',
         axisBorder: {
           show: true,
@@ -239,7 +227,7 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
     return baseOptions;
   };
 
-  const options = useMemo(() => getChartOptions(), [chartType, currency]); // Removido 'Name' das dependências pois não é mais usado no gráfico
+  const options = useMemo(() => getChartOptions(), [chartType, currency]);
 
   return (
     <div className="graph-container" style={{ height: '100%', width: '100%' }}>

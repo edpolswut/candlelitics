@@ -28,18 +28,20 @@
 }
 
 .modal-content {
-  background: white;
+  background: var(--bg-card);
 
   border-radius: 16px;
 
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
 
   max-width: 500px;
   width: 90%;
 
-  max-height: 90vh;
-  overflow-y: auto;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
 
+  color: var(--text-primary);
   animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -65,9 +67,8 @@
 
   padding: 24px;
 
-  border-bottom: 1px solid #e8ecf1;
-
-  background: linear-gradient(135deg, #f8f9fb 0%, #ffffff 100%);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card);
 }
 
 .modal-header h2 {
@@ -75,8 +76,7 @@
 
   font-size: 24px;
   font-weight: 700;
-
-  color: #2c3e50;
+  color: var(--text-primary);
 }
 
 /* BOTÃO FECHAR */
@@ -86,7 +86,7 @@
   border: none;
 
   font-size: 28px;
-  color: #a0aab5;
+  color: var(--text-secondary);
 
   cursor: pointer;
 
@@ -103,14 +103,39 @@
 }
 
 .modal-close:hover {
-  background-color: #f0f2f5;
-  color: #2c3e50;
+  background-color: var(--bg-card-hover);
+  color: var(--text-primary);
 }
 
 /* BODY */
 
 .modal-body {
   padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+
+  /* Scrollbar moderna para Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-primary) transparent;
+}
+
+/* Scrollbar moderna para Chrome, Edge e Safari */
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background-color: var(--accent-primary);
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-secondary);
 }
 
 /* FORM */
@@ -129,7 +154,7 @@ form {
 
 .form-group label {
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--text-primary);
   font-size: 14px;
 }
 
@@ -138,7 +163,7 @@ form {
 .form-input {
   padding: 12px 14px;
 
-  border: 2px solid #e8ecf1;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
 
   font-size: 14px;
@@ -146,27 +171,73 @@ form {
 
   transition: all 0.2s ease;
 
-  background-color: #fafbfc;
+  background-color: var(--bg-background);
+  color: var(--text-primary);
 }
 
 .form-input:focus {
   outline: none;
 
-  border-color: #0056b3;
+  border-color: var(--accent-primary);
 
-  background-color: #fff;
+  background-color: var(--bg-card);
 
   box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
 }
 
 .form-input::placeholder {
-  color: #a0aab5;
+  color: var(--text-secondary);
+  opacity: 0.6;
 }
 
 /* FILE INPUT */
 
-input[type="file"] {
+.file-input-wrapper {
+  width: 100%;
+  margin-top: 5px;
+}
+
+.hidden-file-input {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.custom-file-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  background-color: var(--bg-background);
+  border: 2px dashed var(--border-color);
+  border-radius: 12px;
+  color: var(--text-secondary);
   cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.custom-file-label:hover {
+  border-color: var(--accent-primary);
+  background-color: var(--bg-card-hover);
+  color: var(--text-primary);
+  transform: translateY(-2px);
+}
+
+.custom-file-label i {
+  font-size: 1.8rem;
+  color: var(--accent-primary);
+}
+
+.file-name-text {
+  margin-left: 10px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* FOOTER */
@@ -199,18 +270,18 @@ input[type="file"] {
 /* CANCELAR */
 
 .btn-cancel {
-  background-color: #e8ecf1;
-  color: #2c3e50;
+  background-color: var(--border-color);
+  color: var(--text-primary);
 }
 
 .btn-cancel:hover {
-  background-color: #d0dce6;
+  filter: brightness(0.9);
 }
 
 /* CONFIRMAR */
 
 .btn-confirm {
-  background: linear-gradient(135deg, #0056b3, #0047a3);
+  background: var(--accent-primary);
 
   color: white;
 
@@ -218,7 +289,7 @@ input[type="file"] {
 }
 
 .btn-confirm:hover {
-  background: linear-gradient(135deg, #0047a3, #003d8f);
+  background: var(--accent-secondary);
 
   box-shadow: 0 6px 16px rgba(0, 86, 179, 0.4);
 

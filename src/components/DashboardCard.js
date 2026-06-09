@@ -115,7 +115,7 @@ const CardHeader = ({
   );
 };
 
-function DashboardCard({ id, widgetConfig, onFullscreenChange }) {
+function DashboardCard({ id, widgetConfig, onFullscreenChange, onDelete }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [ticker, setTicker] = useState(widgetConfig.ativos[0]);
   const [metadata, setMetadata] = useState({ name: '', logo: '' });
@@ -124,7 +124,7 @@ function DashboardCard({ id, widgetConfig, onFullscreenChange }) {
   const handleToggleFullscreen = () => {
     const newState = !isFullscreen;
     setIsFullscreen(newState);
-    if (onFullscreenChange) onFullscreenChange(newState); // Avisa o Dashboards.js
+    if (onFullscreenChange) onFullscreenChange(newState);
   };
   // Trava o scroll do body quando em tela cheia
   useEffect(() => {
@@ -135,7 +135,7 @@ function DashboardCard({ id, widgetConfig, onFullscreenChange }) {
     <div className={`dashboard-card-wrapper ${isFullscreen ? 'is-fullscreen' : ''}`}>
       <CardHeader 
         ticker={ticker} setTicker={setTicker} companyMetadata={metadata}
-        onDelete={() => {}} onEdit={() => {}} 
+        onDelete={() => onDelete(id)} onEdit={() => {}} 
         onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
         isFullscreen={isFullscreen} widgetId={id}
         activePeriod={activePeriod} setActivePeriod={setActivePeriod}

@@ -12,30 +12,6 @@
   width: 100%;
 }
 
-.add-button {
-  padding: 14px 28px;
-  background: linear-gradient(135deg, #0056b3, #0047a3);
-  color: white;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  font-size: 16px;
-  box-shadow: 0 2px 8px rgba(0, 86, 179, 0.2);
-}
-
-.add-button:hover {
-  background: linear-gradient(135deg, #0047a3, #003d8f);
-  box-shadow: 0 4px 12px rgba(0, 86, 179, 0.3);
-  transform: translateY(-2px);
-}
-
-.add-button:active {
-  transform: translateY(0);
-}
-
 .dashboards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
@@ -59,7 +35,7 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0056b3, #0047a3);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-dark));
   color: white;
   font-size: 32px;
   font-weight: bold;
@@ -75,7 +51,7 @@
 
 .fab-button:hover {
   transform: scale(1.05);
-  background: linear-gradient(135deg, #0047a3, #003d8f);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
 }
 
 /* Atualize o card-body */
@@ -85,7 +61,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* IMPRESCINDÍVEL: Evita que o Flexbox ignore a altura do pai e vaze o gráfico */
+  min-height: 0;
 }
 
 /* Garante que o ApexCharts preencha o espaço todo */

@@ -1,30 +1,33 @@
-CREATE OR REPLACE DATABASE IF NOT EXISTS Candlelitics;
+DROP DATABASE IF EXISTS Candlelitics;
+
+CREATE DATABASE IF NOT EXISTS Candlelitics;
 USE Candlelitics;
 
 CREATE TABLE Usuario (
-    Id_Usuario INTEGER PRIMARY KEY,
-    Login VARCHAR(40),
-    Email VARCHAR(150),
-    SenhaHash VARCHAR(150),
-    Img LONGBLOB,
-    UNIQUE (Id_Usuario, Login, Email)
+    Id_Usuario INT AUTO_INCREMENT PRIMARY KEY,
+    Login VARCHAR(40) NOT NULL UNIQUE,
+    Email VARCHAR(150) NOT NULL UNIQUE,
+    SenhaHash VARCHAR(255) NOT NULL,
+    Img LONGBLOB
 );
 
 CREATE TABLE Dashboard (
-    Id INTEGER PRIMARY KEY UNIQUE,
-    Id_Usuario INTEGER,
-    Nome VARCHAR(40)
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Id_Usuario INT NOT NULL,
+    Nome VARCHAR(40) NOT NULL,
+    FOREIGN KEY (Id_Usuario) REFERENCES Usuario(Id_Usuario)
 );
 
 CREATE TABLE Cards (
-    Id INTEGER PRIMARY KEY UNIQUE,
-    Id_Dashboard INTEGER
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Id_Dashboard INT NOT NULL,
+    Ticker VARCHAR(20) NOT NULL,
+    TipoGrafico VARCHAR(30) NOT NULL,
+    X INT NOT NULL,
+    Y INT NOT NULL,
+    W INT NOT NULL,
+    H INT NOT NULL,
+    FOREIGN KEY (Id_Dashboard) REFERENCES Dashboard(Id)
 );
- 
-ALTER TABLE Dashboard ADD CONSTRAINT FK_Dashboard_3
-    FOREIGN KEY (Id_Usuario)
-    REFERENCES Usuario (Id_Usuario);
- 
-ALTER TABLE Cards ADD CONSTRAINT FK_Cards_3
-    FOREIGN KEY (Id_Dashboard)
-    REFERENCES Dashboard (Id);
+
+select * from Cards;

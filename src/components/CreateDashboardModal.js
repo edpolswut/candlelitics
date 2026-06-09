@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './CreateDashboardModal.css';
 
-const CreateDashboardModal = ({ isOpen, onClose, onConfirm }) => {
+const CreateDashboardModal = ({ isOpen, onClose, onConfirm, isDarkTheme }) => {
   const [config, setConfig] = useState({
     stockCode: '',
     chartType: 'candlestick'
@@ -25,45 +25,57 @@ const CreateDashboardModal = ({ isOpen, onClose, onConfirm }) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <h2>Criar Novo Dashboard</h2>
-        
-        <div className="form-group">
-          <label>Código da Ação:</label>
-          <input
-            type="text"
-            name="stockCode"
-            placeholder="Ex: AAPL, PETR4, BTC"
-            value={config.stockCode}
-            onChange={handleChange}
-          />
+      <div 
+        className="modal-content" 
+        data-theme={isDarkTheme ? 'dark' : 'light'} 
+        onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>
+            <i className="fas fa-chart-line"></i> Criar Novo Dashboard
+          </h2>
+          <button className="modal-close" onClick={onClose}>×</button>
         </div>
 
-        <div className="form-group">
-          <label>Tipo de Gráfico:</label>
-          <div className="radio-group">
-            <label>
-              <input
-                type="radio"
-                name="chartType"
-                value="candlestick"
-                checked={config.chartType === 'candlestick'}
-                onChange={handleChange}
-              /> Candlestick
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="chartType"
-                value="line"
-                checked={config.chartType === 'line'}
-                onChange={handleChange}
-              /> Linha
-            </label>
+        <div className="modal-body">
+          <div className="form-group">
+            <label>Código da Ação:</label>
+            <input
+              type="text"
+              name="stockCode"
+              className="form-input"
+              placeholder="Ex: AAPL, PETR4, BTC"
+              value={config.stockCode}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Tipo de Gráfico:</label>
+            <div className="radio-group">
+              <label>
+                <input
+                  type="radio"
+                  name="chartType"
+                  value="candlestick"
+                  checked={config.chartType === 'candlestick'}
+                  onChange={handleChange}
+                /> Candlestick
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="chartType"
+                  value="line"
+                  checked={config.chartType === 'line'}
+                  onChange={handleChange}
+                /> Linha
+              </label>
+            </div>
           </div>
         </div>
 
-        <div className="modal-actions">
+        <div className="modal-footer">
           <button className="btn-cancel" onClick={onClose}>Cancelar</button>
           <button className="btn-confirm" onClick={handleConfirm}>Criar Dashboard</button>
         </div>
