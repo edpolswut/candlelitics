@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './CreateDashboardModal.css';
+import { toast } from 'react-toastify';
 
 const CreateDashboardModal = ({ isOpen, onClose, onConfirm, isDarkTheme }) => {
   const [config, setConfig] = useState({
@@ -11,34 +12,54 @@ const CreateDashboardModal = ({ isOpen, onClose, onConfirm, isDarkTheme }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setConfig((prev) => ({ ...prev, [name]: value }));
+
+    setConfig((prev) => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleConfirm = () => {
     if (!config.stockCode.trim()) {
-      alert("Por favor, digite o código de uma ação (ex: PETR4).");
+      toast.error('Por favor, digite o código de uma ação (ex: PETR4).');
       return;
     }
-    onConfirm(config); 
-    setConfig({ stockCode: '', chartType: 'candlestick' }); 
+
+    onConfirm(config);
+
+    // reset SEM afetar UI
+    setConfig({
+      stockCode: '',
+      chartType: 'candlestick'
+    });
+
+    toast.success('Dashboard criado com sucesso!');
+    onClose();
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div 
-        className="modal-content" 
-        data-theme={isDarkTheme ? 'dark' : 'light'} 
-        onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal-content"
+        data-theme={isDarkTheme ? 'dark' : 'light'}
+        onClick={(e) => e.stopPropagation()}
+      >
+
         <div className="modal-header">
           <h2>
             <i className="fas fa-chart-line"></i> Criar Novo Dashboard
           </h2>
-          <button className="modal-close" onClick={onClose}>×</button>
+
+          <button className="modal-close" onClick={onClose}>
+            ×
+          </button>
         </div>
 
         <div className="modal-body">
+
           <div className="form-group">
             <label>Código da Ação:</label>
+
             <input
               type="text"
               name="stockCode"
@@ -46,13 +67,14 @@ const CreateDashboardModal = ({ isOpen, onClose, onConfirm, isDarkTheme }) => {
               placeholder="Ex: AAPL, PETR4, BTC"
               value={config.stockCode}
               onChange={handleChange}
-              required
             />
           </div>
 
           <div className="form-group">
             <label>Tipo de Gráfico:</label>
+
             <div className="radio-group">
+
               <label>
                 <input
                   type="radio"
@@ -60,8 +82,10 @@ const CreateDashboardModal = ({ isOpen, onClose, onConfirm, isDarkTheme }) => {
                   value="candlestick"
                   checked={config.chartType === 'candlestick'}
                   onChange={handleChange}
-                /> Candlestick
+                />
+                Candlestick
               </label>
+
               <label>
                 <input
                   type="radio"
@@ -69,16 +93,33 @@ const CreateDashboardModal = ({ isOpen, onClose, onConfirm, isDarkTheme }) => {
                   value="line"
                   checked={config.chartType === 'line'}
                   onChange={handleChange}
-                /> Linha
+                />
+                Linha
               </label>
+
             </div>
           </div>
+
         </div>
 
         <div className="modal-footer">
-          <button className="btn-cancel" onClick={onClose}>Cancelar</button>
-          <button className="btn-confirm" onClick={handleConfirm}>Criar Dashboard</button>
+
+          <button
+            className="btn-cancel"
+            onClick={onClose}
+          >
+            Cancelar
+          </button>
+
+          <button
+            className="btn-confirm"
+            onClick={handleConfirm}
+          >
+            Criar Dashboard
+          </button>
+
         </div>
+
       </div>
     </div>
   );
