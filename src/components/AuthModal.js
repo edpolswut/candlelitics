@@ -25,21 +25,57 @@ function AuthModal({ type, onClose, isDarkTheme, onLoginSuccess }) {
 
   const validateRegisterForm = () => {
     const newErrors = {};
-
-    if (!registerData.login.trim()) newErrors.login = 'O usuário é obrigatório';
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!registerData.email.trim()) newErrors.email = 'O e-mail é obrigatório';
-    else if (!emailRegex.test(registerData.email)) newErrors.email = 'Digite um e-mail válido';
 
-    if (!registerData.senha) newErrors.senha = 'A senha é obrigatória';
-    else if (registerData.senha.length < 6) newErrors.senha = 'A senha deve ter pelo menos 6 caracteres';
+    if (!registerData.login.trim()) {
+      newErrors.login = 'O usuário é obrigatório';
+    } else if (registerData.login.trim().length < 3) {
+      newErrors.login = 'O usuário deve ter pelo menos 3 caracteres';
+    } else if (!/^[a-zA-Z0-9_-]+$/.test(registerData.login)) {
+      newErrors.login = 'O usuário só pode conter letras, números, - e _';
+    }
 
-    if (!registerData.confirmarSenha) newErrors.confirmarSenha = 'Confirme sua senha';
-    else if (registerData.senha !== registerData.confirmarSenha)
+    if (!registerData.email.trim()) {
+      newErrors.email = 'O e-mail é obrigatório';
+    } else if (!emailRegex.test(registerData.email)) {
+      newErrors.email = 'Digite um e-mail válido';
+    }
+
+    if (!registerData.senha) {
+      newErrors.senha = 'A senha é obrigatória';
+    } else if (registerData.senha.length < 6) {
+      newErrors.senha = 'A senha deve ter pelo menos 6 caracteres';
+    } else if (registerData.senha.length > 50) {
+      newErrors.senha = 'A senha não pode exceder 50 caracteres';
+    }
+
+    if (!registerData.confirmarSenha) {
+      newErrors.confirmarSenha = 'Confirme sua senha';
+    } else if (registerData.senha !== registerData.confirmarSenha) {
       newErrors.confirmarSenha = 'As senhas não coincidem';
+    }
 
     setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateLoginForm = () => {
+    const newErrors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!loginData.email.trim()) {
+      newErrors.email = 'O e-mail é obrigatório';
+    } else if (!emailRegex.test(loginData.email)) {
+      newErrors.email = 'Digite um e-mail válido';
+    }
+
+    if (!loginData.senha) {
+      newErrors.senha = 'A senha é obrigatória';
+    } else if (loginData.senha.length < 6) {
+      newErrors.senha = 'A senha deve ter pelo menos 6 caracteres';
+    }
+
+    setLoginErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -93,15 +129,7 @@ function AuthModal({ type, onClose, isDarkTheme, onLoginSuccess }) {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
 
-    const newErrors = {};
-
-    if (!loginData.email) newErrors.email = ' ';
-    if (!loginData.senha) newErrors.senha = ' ';
-
-    if (Object.keys(newErrors).length > 0) {
-      setLoginErrors(newErrors);
-      return;
-    }
+    if (!validateLoginForm()) return;
 
     try {
       const data = await loginUser(loginData);
@@ -119,7 +147,7 @@ function AuthModal({ type, onClose, isDarkTheme, onLoginSuccess }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div
         className="modal-content"
         data-theme={isDarkTheme ? 'dark' : 'light'}
@@ -156,11 +184,12 @@ function AuthModal({ type, onClose, isDarkTheme, onLoginSuccess }) {
               <div className="form-group">
                 <label>Email</label>
                 <input
-                  type="email"
+                  type="text"
                   name="email"
                   className="form-input"
                   value={registerData.email}
                   onChange={handleRegisterChange}
+                  placeholder="seu.email@exemplo.com"
                 />
                 {errors.email && <span className="error-message">{errors.email}</span>}
               </div>
@@ -233,7 +262,7 @@ function AuthModal({ type, onClose, isDarkTheme, onLoginSuccess }) {
               <div className="form-group">
                 <label>Email</label>
                 <input
-                  type="email"
+                  type="text"
                   name="email"
                   className="form-input"
                   value={loginData.email}

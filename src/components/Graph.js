@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Chart from 'react-apexcharts';
+import { getQuoteData } from '../services/api';
 
-const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period = '1M' }) => {
-  const chartType = config.chartType || 'candlestick';
+const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period = '1M', refreshTrigger = 0 }) => {
+  const { chartType = 'candlestick', assetType = 'stock' } = config;
   
   const [rawData, setRawData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,91 +12,82 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
   
   const [logoUrl, setLogoUrl] = useState(null);
   const [stockName, setStockName] = useState(Name);
-  
-  const API_KEY = 'ie2zCfzxZAY3SysfiKnZM9';
+  const [isCrypto, setIsCrypto] = useState(false);
 
   useEffect(() => {
     const fetchStockData = async () => {
       try {
-        setLoading(true);
+        setError(null);
+        
+        // SÓ MOSTRA O LOADING SE FOR O PRIMEIRO CARREGAMENTO
+        // Isso evita que o gráfico pisque a cada minuto
+        if (rawData.length === 0) {
+          setLoading(true);
+        }
         
         let range = '1mo';
         let interval = '1d';
         
         if (period === '1D') { 
-          range = '1d'; interval = '15m'; // Último dia, dados a cada 15 min
+          range = '1d'; interval = '15m';
         } else if (period === '1S') { 
-          range = '5d'; interval = '1h';  // 1 Semana (5 dias úteis), dados a cada 1 hora
+          range = '5d'; interval = '1h';
         } else if (period === '1M') { 
-          range = '1mo'; interval = '1d'; // 1 Mês, dados diários
+          range = '1mo'; interval = '1d';
         } else if (period === '1A') { 
-          range = '1y'; interval = '1d';  // 1 Ano, dados diários
+          range = '1y'; interval = '1d';
         }
 
-        const stockCode = Name.includes('.') ? Name : `${Name}.SA`;
+        const stock = await getQuoteData(Name, range, interval, assetType);
         
-        const url = `https://brapi.dev/api/quote/${stockCode}?range=${range}&interval=${interval}&token=${API_KEY}`;
-        console.log('Fetch para:', url);
+        setCurrency(stock.currency || 'BRL');
+        setLogoUrl(stock.logourl);
+        setStockName(stock.longName || stock.shortName || Name);
         
-        const response = await fetch(url);
+        // Detecta se é cripto (não tem .SA e a moeda é USD geralmente)
+        const isCryptoAsset = !Name.includes('.SA') && Name.length <= 5 && stock.currency === 'USD';
+        setIsCrypto(isCryptoAsset);
         
-        if (!response.ok) {
-          throw new Error(`Erro na API: ${response.status}`);
+        if (onMetadataLoaded) {
+          onMetadataLoaded({
+            name: stock.longName || stock.shortName || Name,
+            logo: stock.logourl
+          });
         }
         
-        const data = await response.json();
-        
-        if (data.results && data.results[0]) {
-          const stock = data.results[0];
-          
-          setCurrency(stock.currency || 'BRL');
-          setLogoUrl(stock.logourl);
-          setStockName(stock.longName || Name);
-          
-          if (onMetadataLoaded) {
-            onMetadataLoaded({
-              name: stock.longName || stock.shortName || Name,
-              logo: stock.logourl
-            });
-          }
-          
-          if (stock.historicalDataPrice && stock.historicalDataPrice.length > 0) {
-            const chartData = stock.historicalDataPrice.map(item => {
-              const dateObj = new Date(item.date * 1000);
-              let dateLabel = '';
-              
-              if (period === '1D') {
-                dateLabel = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-              } else if (period === '1S') {
-                dateLabel = dateObj.toLocaleDateString('pt-BR', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
-              } else if (period === '1M') {
-                dateLabel = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-              } else {
-                dateLabel = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' });
-              }
-
-              return {
-                x: dateLabel,
-                y: [
-                  parseFloat(item.open?.toFixed(2) || 0),
-                  parseFloat(item.high?.toFixed(2) || 0),
-                  parseFloat(item.low?.toFixed(2) || 0),
-                  parseFloat(item.close?.toFixed(2) || 0)
-                ]
-              };
-            });
+        if (stock.historicalDataPrice && stock.historicalDataPrice.length > 0) {
+          const chartData = stock.historicalDataPrice
+          .map(item => {
+            const dateObj = new Date(item.date * 1000);
+            let dateLabel = '';
             
-            setRawData(chartData);
-          } else {
-            setRawData([]); 
-          }
-          
-          setError(null);
+            if (period === '1D') {
+              dateLabel = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            } else if (period === '1S') {
+              dateLabel = dateObj.toLocaleDateString('pt-BR', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+            } else if (period === '1M') {
+              dateLabel = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+            } else {
+              dateLabel = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' });
+            }
+
+            return {
+              x: dateLabel,
+              y: [
+                parseFloat(item.open?.toFixed(2) || 0),
+                parseFloat(item.high?.toFixed(2) || 0),
+                parseFloat(item.low?.toFixed(2) || 0),
+                parseFloat(item.close?.toFixed(2) || 0)
+              ]
+            };
+          });
+          setRawData(chartData);
         } else {
-          throw new Error('Resposta da API inválida');
+          setRawData([]); 
         }
+        
       } catch (err) {
-        setError(err.message);
+        setError(err.error || 'Ativo não encontrado ou erro na busca.');
         console.error('Erro ao buscar dados:', err);
       } finally {
         setLoading(false);
@@ -105,7 +97,7 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
     if (Name) {
       fetchStockData();
     }
-  }, [Name, onMetadataLoaded, period]);
+  }, [Name, onMetadataLoaded, period, assetType, refreshTrigger]);
 
   const series = useMemo(() => {
     if (!rawData || rawData.length === 0) return [{ name: 'Preço', data: [] }];
@@ -139,6 +131,14 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
         zoom: {
           enabled: true,
           type: 'xy'
+        },
+        // Adicionamos animações suaves para a atualização dos dados
+        animations: {
+          enabled: true,
+          easing: 'linear',
+          dynamicAnimation: {
+            speed: 1000
+          }
         }
       },
       xaxis: {
@@ -230,11 +230,24 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
   const options = useMemo(() => getChartOptions(), [chartType, currency]);
 
   return (
-    <div className="graph-container" style={{ height: '100%', width: '100%' }}>
-      {loading && <p style={{ textAlign: 'center' }}>Carregando dados...</p>}
-      {error && <p style={{ textAlign: 'center', color: 'red' }}>Erro: {error}</p>}
+    <div className="graph-container" style={{ height: '100%', width: '100%', position: 'relative' }}>
       
-      {!loading && !error && (
+      {/* Mostra o loading apenas se não houver dados e estiver carregando */}
+      {loading && rawData.length === 0 && (
+        <p style={{ textAlign: 'center', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+          Carregando dados...
+        </p>
+      )}
+      
+      {/* Mostra o erro e Oculta o gráfico */}
+      {error && (
+        <div style={{ textAlign: 'center', color: '#ff4d4f', padding: '16px', fontSize: '12px' }}>
+          <p><strong>Erro ao carregar o ativo.</strong></p><p>{error}</p>
+        </div>
+      )}
+      
+      {/* Mostra o gráfico contanto que não tenha erro e que já existam dados para mostrar */}
+      {!error && rawData.length > 0 && (
         <Chart 
           options={options} 
           series={series} 
@@ -243,6 +256,7 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
           width="100%" 
         />
       )}
+      
     </div>
   );
 };

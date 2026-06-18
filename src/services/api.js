@@ -82,6 +82,21 @@ export const deleteDashboard = async (id) => {
   return result;
 };
 
+export const updateCard = async (id, data) => {
+  const response = await fetch(`${BASE_URL}/cards/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await response.json();
+  if (!response.ok) throw result;
+  return result;
+};
+
 /*STOCK / GRAPH*/
 
 export const getStockData = async (symbol, period = '1M') => {
@@ -113,20 +128,31 @@ export const getCompanyMetadata = async (symbol) => {
   return result;
 };
 
-/* CRYPTO / BINANCE */
+/* QUOTE DATA - AÇÕES E CRIPTOS */
 
-export const getCryptoPrices = async () => {
+export const getQuoteData = async (symbol, range = '1mo', interval = '1d', assetType = 'stock') => {
   try {
-    // Usa o BASE_URL que já aponta para http://localhost:3001/api
-    const response = await fetch(`${BASE_URL}/binance/prices`);
-    
-    if (!response.ok) {
-      throw new Error('Falha ao obter as cotações');
-    }
-    
-    return await response.json();
+    const url = `${BASE_URL}/quote/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}&assetType=${assetType}`;
+    const response = await fetch(url);
+
+    const result = await response.json();
+    if (!response.ok) throw result;
+    return result;
   } catch (error) {
-    console.error('Erro no frontend ao buscar preços:', error);
-    return []; // Retorna um array vazio em caso de erro para não quebrar a interface
+    console.error('Erro ao buscar dados do ativo:', error);
+    throw error;
+  }
+};
+
+export const getAvailableCryptos = async () => {
+  try {
+    const response = await fetch(`${BASE_URL}/crypto/available`);
+
+    const result = await response.json();
+    if (!response.ok) throw result;
+    return result.coins || [];
+  } catch (error) {
+    console.error('Erro ao buscar criptos disponíveis:', error);
+    return []; // Retorna array vazio em caso de erro
   }
 };

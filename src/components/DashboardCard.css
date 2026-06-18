@@ -51,6 +51,16 @@
   height: 20px;
   background: var(--border-color);
   border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.company-logo-placeholder svg {
+  width: 14px;
+  height: 14px;
+  color: var(--text-primary);
+  stroke: var(--text-primary);
 }
 
 .company-details {

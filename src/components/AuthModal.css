@@ -300,6 +300,14 @@ form {
   transform: translateY(0);
 }
 
+.error-message {
+  color: var(--accent-secondary);
+  border: 1px dashed var(--accent-secondary);
+  border-radius: 4px;
+  padding: 4px 6px;
+
+}
+
 /* RESPONSIVO */
 
 @media (max-width: 600px) {

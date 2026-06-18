@@ -3,6 +3,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
+const https = require('https');
 
 require('dotenv').config();
 
@@ -86,7 +87,7 @@ app.post('/api/login', async (req, res) => {
             },
             process.env.JWT_SECRET,
             {
-                expiresIn: '2h'
+                expiresIn: '24h'
             }
         );
 
@@ -180,7 +181,7 @@ app.get('/api/dashboards/principal/cards', auth, async (req, res) => {
 
 app.post('/api/dashboards/principal/cards', auth, async (req, res) => {
     try {
-        const { ticker, tipoGrafico, x, y, w, h } = req.body;
+        const { ticker, tipoGrafico, x, y, w, h, tipoAtivo } = req.body;
 
         let [dashboards] = await db.query(
             'SELECT Id FROM Dashboard WHERE Id_Usuario = ? LIMIT 1',
@@ -202,15 +203,16 @@ app.post('/api/dashboards/principal/cards', auth, async (req, res) => {
 
         const [resultado] = await db.query(
             `INSERT INTO Cards
-            (Id_Dashboard, Ticker, TipoGrafico, X, Y, W, H)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [dashboardId, ticker, tipoGrafico, x, y, w, h]
+            (Id_Dashboard, Ticker, TipoGrafico, X, Y, W, H, TipoAtivo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [dashboardId, ticker, tipoGrafico, x, y, w, h, tipoAtivo || 'stock']
         );
 
         res.status(201).json({
             id: resultado.insertId,
             ticker,
             tipoGrafico,
+            tipoAtivo,
             x,
             y,
             w,
@@ -226,15 +228,47 @@ app.post('/api/dashboards/principal/cards', auth, async (req, res) => {
     }
 });
 
+app.put('/api/cards/:id', auth, async (req, res) => {
+    try {
+        const { ticker, tipoGrafico, tipoAtivo } = req.body;
+
+        const [resultado] = await db.query(
+            `UPDATE Cards
+            SET Ticker = ?, TipoGrafico = ?, TipoAtivo = ?
+            WHERE Id = ?`,
+            [ticker, tipoGrafico, tipoAtivo, req.params.id]
+        );
+
+        if (resultado.affectedRows === 0) {
+            return res.status(404).json({ erro: 'Card não encontrado' });
+        }
+
+        res.json({
+            id: req.params.id,
+            ticker,
+            tipoGrafico,
+            tipoAtivo
+        });
+
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ erro: 'Erro ao atualizar card' });
+    }
+});
+
 app.put('/api/cards/:id/layout', auth, async (req, res) => {
     try {
         const { x, y, w, h } = req.body;
+
+        // Garante que o tamanho mínimo seja respeitado ao salvar
+        const finalW = Math.max(w, 2);
+        const finalH = Math.max(h, 3);
 
         await db.query(
             `UPDATE Cards
             SET X = ?, Y = ?, W = ?, H = ?
             WHERE Id = ?`,
-            [x, y, w, h, req.params.id]
+            [x, y, finalW, finalH, req.params.id]
         );
 
         res.json({
@@ -270,19 +304,103 @@ app.delete('/api/cards/:id', auth, async (req, res) => {
     }
 });
 
-app.get('/api/binance/prices', async (req, res) => {
+app.get('/api/quote/:symbol', async (req, res) => {
     try {
-        // Moedas que queremos buscar na Binance
-        const symbols = '["BTCUSDT","ETHUSDT","BNBUSDT"]';
+        const { symbol } = req.params;
+        const httpsAgent = new https.Agent({
+            rejectUnauthorized: true,
+        });
+        const { range = '1mo', interval = '1d', assetType = 'stock' } = req.query;
+        const API_KEY = 'ie2zCfzxZAY3SysfiKnZM9';
         
-        // encodeURIComponent previne erros de parse no HTTP com os colchetes
-        const response = await axios.get(`https://api.binance.com/api/v3/ticker/price?symbols=${encodeURIComponent(symbols)}`);
+        let stockCode = symbol;
+        let url;
+
+        const axiosConfig = {
+            httpsAgent,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
+            }
+        };
         
-        // Devolve os dados para o frontend
-        res.json(response.data);
+        if (assetType === 'crypto') {
+            stockCode = `${symbol.toUpperCase()}USDT`;
+            
+            let startTime;
+            const now = new Date();
+            
+            if (range === '1d') now.setDate(now.getDate() - 1);
+            else if (range === '5d') now.setDate(now.getDate() - 5);
+            else if (range === '1y') now.setFullYear(now.getFullYear() - 1);
+            else now.setMonth(now.getMonth() - 1);
+            startTime = now.getTime();
+
+            url = `https://api4.binance.com/api/v3/klines?symbol=${stockCode}&interval=${interval}&startTime=${startTime}`;
+            
+            const localHttpsAgent = new https.Agent({ rejectUnauthorized: false });
+            const response = await axios.get(url, { 
+                httpsAgent: localHttpsAgent 
+            });
+            const klines = response.data;
+
+            // Adapta a resposta da Binance para o formato que o frontend espera
+            const historicalDataPrice = klines.map(k => ({
+                date: Math.floor(k[0] / 1000), // Converte de milissegundos para segundos
+                open: parseFloat(k[1]),
+                high: parseFloat(k[2]),
+                low: parseFloat(k[3]),
+                close: parseFloat(k[4]),
+                volume: parseFloat(k[5])
+            }));
+
+            // Monta a resposta final no formato esperado
+            return res.json({
+                symbol: stockCode,
+                currency: 'USD',
+                historicalDataPrice: historicalDataPrice
+            });
+
+        } else {
+            stockCode = symbol.includes('.') ? symbol : `${symbol.toUpperCase()}.SA`;
+            url = `https://brapi.dev/api/quote/${stockCode}?range=${range}&interval=${interval}&token=${API_KEY}`;
+            const response = await axios.get(url, { httpsAgent });
+            if (!response.data.results || response.data.results.length === 0) {
+                return res.status(404).json({ error: 'Símbolo não encontrado' });
+            }
+            res.json(response.data.results[0]);
+        }
     } catch (error) {
-        console.error('Erro ao buscar dados na API da Binance:', error);
-        res.status(500).json({ error: 'Falha de comunicação com a Binance' });
+        if (error.response) {
+            console.error('\n--- ERRO DA API EXTERNA ---');
+            console.error(`Status HTTP: ${error.response.status}`);
+            console.error(`URL Tentada: ${error.config.url}`);
+            console.error('Resposta do Servidor:', error.response.data);
+            console.error('---------------------------\n');
+            
+            if (error.response.status === 403) {
+                return res.status(403).json({ error: 'A API bloqueou o acesso. Verifique o terminal do servidor.' });
+            }
+            if (error.response.status === 400) {
+                return res.status(400).json({ error: 'Ativo inválido ou formato incorreto.' });
+            }}
+        console.error('Erro ao buscar dados da API externa:', error.message);
+        res.status(500).json({ error: 'Falha ao buscar dados do ativo' });
+    }
+});
+
+app.get('/api/crypto/available', async (req, res) => {
+    try {
+        const availablePopularCoins = [
+            "BTC", "ETH", "BNB", "SOL", "XRP", "DOGE", "ADA", "AVAX", "SHIB", "DOT", 
+            "TRX", "LINK", "MATIC", "LTC", "BCH", "ICP", "UNI", "NEAR", "INJ", "GRT"
+        ];
+
+        res.json({ coins: availablePopularCoins });
+
+    } catch (error) {
+        console.error('Erro ao buscar criptomoedas disponíveis:', error);
+        res.status(500).json({ error: 'Falha ao buscar lista de criptomoedas' });
     }
 });
 // ==========================================================

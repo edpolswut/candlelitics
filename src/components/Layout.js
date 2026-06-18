@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import textLogoLight from '../img/candleliticsTextLogo.png';
 import textLogoDark from '../img/candleliticsTextLogoDark.png';
 import './Layout.css';
@@ -51,11 +53,17 @@ function Layout() {
 
           {user ? (
             <div className="user-profile">
-              <img 
-                src={user.photoUrl}
-                alt="Foto do usuário" 
-                className="user-photo" 
-              />
+              {user.photoUrl ? (
+                <img 
+                  src={user.photoUrl}
+                  alt="Foto do usuário" 
+                  className="user-photo" 
+                />
+              ) : (
+                <div className="default-avatar">
+                  <i className="fas fa-user"></i>
+                </div>
+              )}
               <span className="user-name">{user.username}</span>
               <button className="btn-logout" onClick={handleLogout}>
                 <i className="fas fa-sign-out-alt"></i>
@@ -90,6 +98,13 @@ function Layout() {
           onLoginSuccess={handleLoginSuccess} 
         />
       )}
+      
+      <ToastContainer 
+        position="bottom-center" 
+        autoClose={3000} 
+        theme={isDarkTheme ? "dark" : "light"} 
+        hideProgressBar={true}
+      />
     </>
   );
 }

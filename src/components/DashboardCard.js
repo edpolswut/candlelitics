@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fa';
 import ApexCharts from 'apexcharts'; 
 import Graph from './Graph';
+import CreateDashboardModal from './CreateDashboardModal';
 import './DashboardCard.css';
 
 const CardHeader = ({ 
@@ -28,7 +29,6 @@ const CardHeader = ({
         headerValue: 'Valor'
       });
     } else if (format === 'png') {
-      // Método oficial para converter o gráfico em Base64 e forçar o download
       chart.dataURI().then(({ imgURI }) => {
         const link = document.createElement('a');
         link.href = imgURI;
@@ -38,7 +38,6 @@ const CardHeader = ({
         document.body.removeChild(link);
       });
     } else if (format === 'svg') {
-      // Forma 100% segura de exportar SVG capturando o nó do DOM
       const svgElement = document.querySelector(`#${widgetId} svg`);
       if (svgElement) {
         const serializer = new XMLSerializer();
@@ -63,7 +62,14 @@ const CardHeader = ({
       <div className="card-info-group">
         {companyMetadata?.logo ? (
           <img src={companyMetadata.logo} alt="logo" className="company-logo-svg" />
-        ) : <div className="company-logo-placeholder" />}
+        ) : (
+          <div className="company-logo-placeholder">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v12M9 9h6a2 2 0 0 1 0 4H9m0 0h6a2 2 0 0 1 0 4H9" />
+            </svg>
+          </div>
+        )}
         
         {!isSearching ? (
           <div className="company-details" onClick={() => setIsSearching(true)}>
@@ -78,7 +84,7 @@ const CardHeader = ({
         )}
       </div>
 
-      <div className="period-filters">
+      {/* <div className="period-filters">
         <select className="period-select" value={activePeriod} onChange={(e) => setActivePeriod(e.target.value)}>
           <option value="1D">1D</option>
           <option value="1S">1S</option>
@@ -86,9 +92,10 @@ const CardHeader = ({
           <option value="1A">1A</option>
         </select>
       </div>
+      */}
       
       <div className="card-actions">
-        <button title="Comparar" className="action-btn"><FaPlus /></button>
+        {/* <button title="Comparar" className="action-btn"><FaPlus /></button> */}
         
         {/* Menu de Exportação */}
         <div className="export-wrapper">
@@ -115,11 +122,13 @@ const CardHeader = ({
   );
 };
 
-function DashboardCard({ id, widgetConfig, onFullscreenChange, onDelete }) {
+function DashboardCard({ id, widgetConfig, onFullscreenChange, onDelete, onUpdate }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [ticker, setTicker] = useState(widgetConfig.ativos[0]);
   const [metadata, setMetadata] = useState({ name: '', logo: '' });
   const [activePeriod, setActivePeriod] = useState('1M');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleToggleFullscreen = () => {
     const newState = !isFullscreen;
@@ -131,11 +140,31 @@ function DashboardCard({ id, widgetConfig, onFullscreenChange, onDelete }) {
     document.body.style.overflow = isFullscreen ? 'hidden' : 'unset';
   }, [isFullscreen]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshTrigger(prev => prev + 1);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleConfirmEdit = (newConfig) => {
+    onUpdate(id, {
+      ticker: newConfig.stockCode.toUpperCase(),
+      tipoGrafico: newConfig.chartType,
+      tipoAtivo: newConfig.assetType
+    });
+    // Atualiza o ticker localmente para o gráfico recarregar
+    setTicker(newConfig.stockCode.toUpperCase());
+    setIsEditModalOpen(false);
+  };
+
   const cardContent = (
     <div className={`dashboard-card-wrapper ${isFullscreen ? 'is-fullscreen' : ''}`}>
       <CardHeader 
         ticker={ticker} setTicker={setTicker} companyMetadata={metadata}
-        onDelete={() => onDelete(id)} onEdit={() => {}} 
+        onDelete={() => onDelete(id)} 
+        onEdit={() => setIsEditModalOpen(true)} 
         onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
         isFullscreen={isFullscreen} widgetId={id}
         activePeriod={activePeriod} setActivePeriod={setActivePeriod}
@@ -144,13 +173,33 @@ function DashboardCard({ id, widgetConfig, onFullscreenChange, onDelete }) {
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
       >
-        <Graph Name={ticker} widgetId={id} config={{ chartType: widgetConfig.tipo_grafico }} 
-          onMetadataLoaded={setMetadata} period={activePeriod} />
+        <Graph Name={ticker} 
+          widgetId={id} 
+          config={{ chartType: widgetConfig.tipo_grafico, assetType: widgetConfig.tipo_ativo }} 
+          onMetadataLoaded={setMetadata} 
+          period={activePeriod}
+          refreshTrigger={refreshTrigger} />
       </div>
     </div>
   );
 
-  if (!isFullscreen) return cardContent;
+  if (!isFullscreen) {
+    return (
+      <>
+        {cardContent}
+        {isEditModalOpen && createPortal(
+          <CreateDashboardModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            onConfirm={handleConfirmEdit}
+            isEditing={true}
+            initialConfig={widgetConfig}
+          />,
+          document.body
+        )}
+      </>
+    );
+  }
 
   return (
     <>
@@ -160,6 +209,16 @@ function DashboardCard({ id, widgetConfig, onFullscreenChange, onDelete }) {
           <div className="fullscreen-content" onClick={(e) => e.stopPropagation()}>
             {cardContent}
           </div>
+          {isEditModalOpen && createPortal(
+            <CreateDashboardModal
+              isOpen={isEditModalOpen}
+              onClose={() => setIsEditModalOpen(false)}
+              onConfirm={handleConfirmEdit}
+              isEditing={true}
+              initialConfig={widgetConfig}
+            />,
+            document.body
+          )}
         </div>,
         document.body
       )}

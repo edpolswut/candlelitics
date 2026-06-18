@@ -2,6 +2,8 @@ npm install
 
 npm install react-toastify
 
+npm install axios
+
 npm install react-apexcharts apexcharts
 
 npm install concurrently --save-dev

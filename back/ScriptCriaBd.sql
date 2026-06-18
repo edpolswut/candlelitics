@@ -29,5 +29,5 @@ CREATE TABLE Cards (
     H INT NOT NULL,
     FOREIGN KEY (Id_Dashboard) REFERENCES Dashboard(Id)
 );
-
+ALTER TABLE Cards ADD COLUMN TipoAtivo VARCHAR(20) NOT NULL DEFAULT 'stock';
 select * from Cards;
