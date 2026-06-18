@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Responsive } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
+import { getCryptoPrices } from '../services/api'; // Importação adicionada
 
 import DashboardCard from '../components/DashboardCard';
 import CreateDashboardModal from '../components/CreateDashboardModal';
@@ -13,6 +14,7 @@ function Dashboards() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [anyFullscreen, setAnyFullscreen] = useState(false);
   const [width, setWidth] = useState(window.innerWidth - 80);
+  const [cryptoPrices, setCryptoPrices] = useState([]);
 
   const carregarCards = async () => {
     try {
@@ -164,6 +166,8 @@ function Dashboards() {
       if (!token) return;
 
       for (const item of layout) {
+        if (item.i === 'crypto-widget') continue;
+
         await fetch(`http://localhost:3001/api/cards/${item.i}/layout`, {
           method: 'PUT',
           headers: {
@@ -186,11 +190,21 @@ function Dashboards() {
 
   useEffect(() => {
     carregarCards();
+    const fetchPrices = async () => {
+      const prices = await getCryptoPrices();
+      setCryptoPrices(prices);
+    };
+
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 30000);
 
     const handleResize = () => setWidth(window.innerWidth - 80);
     window.addEventListener('resize', handleResize);
 
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearInterval(interval);
+    };
   }, []);
 
   const onLayoutChange = (layout, allLayouts) => {
@@ -200,45 +214,75 @@ function Dashboards() {
 
   return (
     <div className="dashboards-container">
-      {widgets.length === 0 ? (
-        <p className="empty-message">Nenhum dashboard criado.</p>
-      ) : (
-        <Responsive
-          className="layout"
-          width={width}
-          layouts={layouts}
-          onLayoutChange={onLayoutChange}
-          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-          cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-          rowHeight={100}
-          margin={[16, 16]}
-          isDraggable={!anyFullscreen}
-          isResizable={true}
-          draggableHandle=".drag-handle"
-          draggableCancel=".card-body, .action-btn, .period-select, .export-menu, .graph-container, .header-search-input, .period-filters"
-          resizeHandles={["se", "sw", "ne", "nw", "e", "w", "n", "s"]}
-        >
-          {widgets.map((widget) => {
-            const layoutItem = layouts.lg?.find((l) => l.i === widget.id) || {
-              x: 0,
-              y: 0,
-              w: 4,
-              h: 3
-            };
+      {/* A grid Responsive sempre renderiza para mostrar o card da Binance */}
+      <Responsive
+        className="layout"
+        width={width}
+        layouts={layouts}
+        onLayoutChange={onLayoutChange}
+        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+        cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+        rowHeight={100}
+        margin={[16, 16]}
+        isDraggable={!anyFullscreen}
+        isResizable={true}
+        draggableHandle=".drag-handle"
+        draggableCancel=".card-body, .action-btn, .period-select, .export-menu, .graph-container, .header-search-input, .period-filters"
+        resizeHandles={["se", "sw", "ne", "nw", "e", "w", "n", "s"]}
+      >
+        
+        {/* Card Estático de Criptomoedas inserido diretamente no grid */}
+        <div key="crypto-widget" data-grid={{ x: 0, y: 0, w: 4, h: 3 }}>
+          <div className="dashboard-card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <div className="card-header drag-handle" style={{ cursor: 'move', backgroundColor: '#f8f9fa', padding: '15px', borderBottom: '1px solid #eee' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#333' }}>Cotações Cripto (Binance)</h3>
+            </div>
+            <div className="card-body" style={{ padding: '15px', overflowY: 'auto', flex: 1, backgroundColor: '#fff' }}>
+              <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+                {cryptoPrices.length === 0 ? (
+                  <li style={{ color: '#666', textAlign: 'center', marginTop: '20px' }}>Carregando cotações...</li>
+                ) : (
+                  cryptoPrices.map(crypto => (
+                    <li key={crypto.symbol} style={{ 
+                      marginBottom: '12px', 
+                      display: 'flex', 
+                      justifyContent: 'space-between',
+                      borderBottom: '1px solid #f1f1f1',
+                      paddingBottom: '8px'
+                    }}>
+                      <strong style={{ color: '#444' }}>{crypto.symbol.replace('USDT', '')}</strong> 
+                      <span style={{ fontWeight: '600', color: '#10b981' }}>
+                        ${parseFloat(crypto.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
 
-            return (
-              <div key={widget.id} data-grid={layoutItem}>
-                <DashboardCard
-                  id={widget.id}
-                  widgetConfig={widget}
-                  onFullscreenChange={setAnyFullscreen}
-                  onDelete={handleDeleteDashboard}
-                />
-              </div>
-            );
-          })}
-        </Responsive>
-      )}
+        {/* Demais cards dinâmicos vindos do banco de dados */}
+        {widgets.map((widget) => {
+          const layoutItem = layouts.lg?.find((l) => l.i === widget.id) || {
+            x: 0,
+            y: 0,
+            w: 4,
+            h: 3
+          };
+
+          return (
+            <div key={widget.id} data-grid={layoutItem}>
+              <DashboardCard
+                id={widget.id}
+                widgetConfig={widget}
+                onFullscreenChange={setAnyFullscreen}
+                onDelete={handleDeleteDashboard}
+              />
+            </div>
+          );
+        })}
+      </Responsive>
 
       <button
         className="fab-button"

@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
 require('dotenv').config();
 
@@ -268,6 +269,23 @@ app.delete('/api/cards/:id', auth, async (req, res) => {
         });
     }
 });
+
+app.get('/api/binance/prices', async (req, res) => {
+    try {
+        // Moedas que queremos buscar na Binance
+        const symbols = '["BTCUSDT","ETHUSDT","BNBUSDT"]';
+        
+        // encodeURIComponent previne erros de parse no HTTP com os colchetes
+        const response = await axios.get(`https://api.binance.com/api/v3/ticker/price?symbols=${encodeURIComponent(symbols)}`);
+        
+        // Devolve os dados para o frontend
+        res.json(response.data);
+    } catch (error) {
+        console.error('Erro ao buscar dados na API da Binance:', error);
+        res.status(500).json({ error: 'Falha de comunicação com a Binance' });
+    }
+});
+// ==========================================================
 
 app.listen(process.env.PORT, () => {
     console.log(`Servidor rodando na porta ${process.env.PORT}`);

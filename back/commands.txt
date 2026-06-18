@@ -2,6 +2,8 @@ npm install
 
 npm install react-apexcharts apexcharts
 
+npm install axios
+
 npm install concurrently --save-dev
 
 cd back

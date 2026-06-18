@@ -112,3 +112,21 @@ export const getCompanyMetadata = async (symbol) => {
   if (!response.ok) throw result;
   return result;
 };
+
+/* CRYPTO / BINANCE */
+
+export const getCryptoPrices = async () => {
+  try {
+    // Usa o BASE_URL que já aponta para http://localhost:3001/api
+    const response = await fetch(`${BASE_URL}/binance/prices`);
+    
+    if (!response.ok) {
+      throw new Error('Falha ao obter as cotações');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Erro no frontend ao buscar preços:', error);
+    return []; // Retorna um array vazio em caso de erro para não quebrar a interface
+  }
+};
