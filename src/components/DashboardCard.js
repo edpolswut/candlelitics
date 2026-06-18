@@ -175,7 +175,7 @@ function DashboardCard({ id, widgetConfig, onFullscreenChange, onDelete, onUpdat
       >
         <Graph Name={ticker} 
           widgetId={id} 
-          config={{ chartType: widgetConfig.tipo_grafico, assetType: widgetConfig.tipo_ativo }} 
+          config={{ chartType: widgetConfig.tipo_grafico, assetType: widgetConfig.tipo_ativo, cor: widgetConfig.cor || '#00b746' }} 
           onMetadataLoaded={setMetadata} 
           period={activePeriod}
           refreshTrigger={refreshTrigger} />

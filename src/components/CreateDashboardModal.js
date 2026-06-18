@@ -3,11 +3,12 @@ import './CreateDashboardModal.css';
 import { toast } from 'react-toastify';
 import { getAvailableCryptos } from '../services/api';
 
-const CreateDashboardModal = ({ isOpen, onClose, onConfirm, isDarkTheme, isEditing = false, initialConfig = {} }) => {
+const CreateDashboardModal = ({ isOpen, onClose, onConfirm, isDarkTheme, isEditing = false, initialConfig }) => {
   const [config, setConfig] = useState({
     stockCode: '',
     chartType: 'candlestick',
-    assetType: 'stock'
+    assetType: 'stock',
+    color: '#00b746'
   });
   const [availableCryptos, setAvailableCryptos] = useState([]);
 
@@ -18,7 +19,8 @@ const CreateDashboardModal = ({ isOpen, onClose, onConfirm, isDarkTheme, isEditi
         setConfig({
           stockCode: initialConfig.ativos[0] || '',
           chartType: initialConfig.tipo_grafico || 'candlestick',
-          assetType: initialConfig.tipo_ativo || 'stock'
+          assetType: initialConfig.tipo_ativo || 'stock',
+          color: initialConfig.cor || '#00b746'
         });
       }
 
@@ -27,7 +29,7 @@ const CreateDashboardModal = ({ isOpen, onClose, onConfirm, isDarkTheme, isEditi
           setAvailableCryptos(coins);
         });
     }
-  }, [isOpen, isEditing, initialConfig]);
+  }, [isOpen, isEditing]);
 
   if (!isOpen) return null;
 
@@ -53,7 +55,6 @@ const CreateDashboardModal = ({ isOpen, onClose, onConfirm, isDarkTheme, isEditi
     onConfirm(config);
 
     if (!isEditing) {
-      // reset SEM afetar UI
       setConfig({
         stockCode: '',
         chartType: 'candlestick',
@@ -138,7 +139,9 @@ const CreateDashboardModal = ({ isOpen, onClose, onConfirm, isDarkTheme, isEditi
                 onChange={handleChange}
                 size={5}
               >
-                {availableCryptos.length === 0 && <option>Carregando...</option>}
+                <option value="" disabled>Selecione uma cripto...</option>
+                {availableCryptos.length === 0 && <option value="">Carregando...</option>}
+                
                 {availableCryptos.map(coin => (
                   <option key={coin} value={coin}>{coin}</option>
                 ))}
@@ -173,7 +176,41 @@ const CreateDashboardModal = ({ isOpen, onClose, onConfirm, isDarkTheme, isEditi
                 Linha
               </label>
 
+              {/* <label>
+                <input 
+                  type="radio" 
+                  name="chartType" 
+                  value="area" 
+                  checked={config.chartType === 'area'} 
+                  onChange={handleChange} 
+                />
+                Área
+              </label>
+
+              <label>
+                <input 
+                  type="radio" 
+                  name="chartType" 
+                  value="bar" 
+                  checked={config.chartType === 'bar'} 
+                  onChange={handleChange} 
+                />
+                Barra
+              </label> */}
+
             </div>
+          </div>
+
+          <div className="form-group">
+            <label>Cor Principal do Gráfico:</label>
+            <input
+              type="color"
+              name="color"
+              className="form-input"
+              style={{ padding: '0', height: '40px', cursor: 'pointer' }}
+              value={config.color}
+              onChange={handleChange}
+            />
           </div>
 
         </div>

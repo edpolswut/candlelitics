@@ -181,7 +181,7 @@ app.get('/api/dashboards/principal/cards', auth, async (req, res) => {
 
 app.post('/api/dashboards/principal/cards', auth, async (req, res) => {
     try {
-        const { ticker, tipoGrafico, x, y, w, h, tipoAtivo } = req.body;
+        const { ticker, tipoGrafico, x, y, w, h, tipoAtivo, cor } = req.body;
 
         let [dashboards] = await db.query(
             'SELECT Id FROM Dashboard WHERE Id_Usuario = ? LIMIT 1',
@@ -202,22 +202,20 @@ app.post('/api/dashboards/principal/cards', auth, async (req, res) => {
         }
 
         const [resultado] = await db.query(
-            `INSERT INTO Cards
-            (Id_Dashboard, Ticker, TipoGrafico, X, Y, W, H, TipoAtivo)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [dashboardId, ticker, tipoGrafico, x, y, w, h, tipoAtivo || 'stock']
-        );
+      `INSERT INTO Cards
+      (Id_Dashboard, Ticker, TipoGrafico, X, Y, W, H, TipoAtivo, Cor)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [dashboardId, ticker, tipoGrafico, x, y, w, h, tipoAtivo || 'stock', cor || '#00b746']
+  );
 
-        res.status(201).json({
-            id: resultado.insertId,
-            ticker,
-            tipoGrafico,
-            tipoAtivo,
-            x,
-            y,
-            w,
-            h
-        });
+    res.status(201).json({
+        id: resultado.insertId,
+        ticker,
+        tipoGrafico,
+        tipoAtivo,
+        cor: cor || '#00b746',
+        x, y, w, h
+    });
 
     } catch (err) {
         console.log(err);
@@ -230,14 +228,14 @@ app.post('/api/dashboards/principal/cards', auth, async (req, res) => {
 
 app.put('/api/cards/:id', auth, async (req, res) => {
     try {
-        const { ticker, tipoGrafico, tipoAtivo } = req.body;
+        const { ticker, tipoGrafico, tipoAtivo, cor } = req.body;
 
-        const [resultado] = await db.query(
-            `UPDATE Cards
-            SET Ticker = ?, TipoGrafico = ?, TipoAtivo = ?
-            WHERE Id = ?`,
-            [ticker, tipoGrafico, tipoAtivo, req.params.id]
-        );
+    const [resultado] = await db.query(
+        `UPDATE Cards
+        SET Ticker = ?, TipoGrafico = ?, TipoAtivo = ?, Cor = ?
+        WHERE Id = ?`,
+        [ticker, tipoGrafico, tipoAtivo, cor, req.params.id]
+    );
 
         if (resultado.affectedRows === 0) {
             return res.status(404).json({ erro: 'Card não encontrado' });

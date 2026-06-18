@@ -30,4 +30,5 @@ CREATE TABLE Cards (
     FOREIGN KEY (Id_Dashboard) REFERENCES Dashboard(Id)
 );
 ALTER TABLE Cards ADD COLUMN TipoAtivo VARCHAR(20) NOT NULL DEFAULT 'stock';
+ALTER TABLE Cards ADD COLUMN Cor VARCHAR(20) DEFAULT '#00b746';
 select * from Cards;

@@ -7,6 +7,7 @@ import 'react-resizable/css/styles.css';
 import DashboardCard from '../components/DashboardCard';
 import CreateDashboardModal from '../components/CreateDashboardModal';
 import './Dashboards.css';
+import ConfirmModal from '../components/ConfirmModal';
 import { updateCard } from '../services/api';
 
 function Dashboards() {
@@ -14,6 +15,7 @@ function Dashboards() {
   const [layouts, setLayouts] = useState({ lg: [] });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [anyFullscreen, setAnyFullscreen] = useState(false);
+  const [confirmModalState, setConfirmModalState] = useState({ isOpen: false, onConfirm: () => {} });
   const [width, setWidth] = useState(window.innerWidth - 80);
 
   const carregarCards = async () => {
@@ -21,7 +23,7 @@ function Dashboards() {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        alert('Você precisa estar logado para ver seus dashboards.');
+        toast.error('Você precisa estar logado para ver seus dashboards.');
         return;
       }
 
@@ -34,7 +36,7 @@ function Dashboards() {
       const dados = await resposta.json();
 
       if (!resposta.ok) {
-        alert(dados.erro);
+        toast.error(dados.erro || 'Falha ao carregar os cards.');
         return;
       }
 
@@ -43,6 +45,7 @@ function Dashboards() {
         ativos: [card.Ticker],
         tipo_grafico: card.TipoGrafico,
         tipo_ativo: card.TipoAtivo,
+        cor: card.Cor, // <-- ADICIONE ISSO
         title: `${card.Ticker} - ${card.TipoGrafico}`
       }));
 
@@ -59,7 +62,7 @@ function Dashboards() {
 
     } catch (err) {
       console.log(err);
-      alert('Erro ao carregar cards');
+      toast.error('Erro ao carregar os cards.');
     }
   };
 
@@ -68,7 +71,7 @@ function Dashboards() {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        alert('Você precisa estar logado para criar cards.');
+        toast.error('Você precisa estar logado para criar cards.');
         return;
       }
 
@@ -82,17 +85,15 @@ function Dashboards() {
           ticker: config.stockCode.toUpperCase(),
           tipoGrafico: config.chartType,
           tipoAtivo: config.assetType || 'stock',
-          x: 0,
-          y: 0,
-          w: 4,
-          h: 3
-        })
+          cor: config.color || '#00b746',
+          x: 0, y: 0, w: 4, h: 3
+        })  
       });
 
       const dados = await resposta.json();
 
       if (!resposta.ok) {
-        alert(dados.erro);
+        toast.error(dados.erro || 'Falha ao criar o card.');
         return;
       }
 
@@ -124,7 +125,7 @@ function Dashboards() {
 
     } catch (err) {
       console.log(err);
-      alert('Erro ao criar card');
+      toast.error('Erro ao criar o card.');
     }
   };
 
@@ -155,11 +156,11 @@ function Dashboards() {
     }
   };
 
-  const handleDeleteDashboard = async (id) => {
-    if (!window.confirm('Tem a certeza que deseja apagar este dashboard?')) {
-      return;
-    }
+  const openDeleteConfirmation = (id) => {
+    setConfirmModalState({ isOpen: true, onConfirm: () => executeDelete(id) });
+  };
 
+  const executeDelete = async (id) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
@@ -173,7 +174,7 @@ function Dashboards() {
 
       if (!resposta.ok) {
         const dados = await resposta.json();
-        alert(dados.erro || 'Erro ao apagar o card');
+        toast.error(dados.erro || 'Erro ao apagar o card');
         return;
       }
 
@@ -185,7 +186,7 @@ function Dashboards() {
 
     } catch (err) {
       console.log(err);
-      alert('Erro ao comunicar com o servidor');
+      toast.error('Erro ao comunicar com o servidor.');
     }
   };
 
@@ -234,7 +235,6 @@ function Dashboards() {
 
   return (
     <div className="dashboards-container">
-      {/* A grid Responsive sempre renderiza para mostrar o card da Binance */}
       <Responsive
         className="layout"
         width={width}
@@ -251,7 +251,6 @@ function Dashboards() {
         resizeHandles={["se", "sw", "ne", "nw", "e", "w", "n", "s"]}
       >
         
-        {/* Demais cards dinâmicos vindos do banco de dados */}
         {widgets.map((widget) => {
           const layoutItem = layouts.lg?.find((l) => l.i === widget.id) || {
             x: 0,
@@ -272,7 +271,7 @@ function Dashboards() {
                 id={widget.id}
                 widgetConfig={widget}
                 onFullscreenChange={setAnyFullscreen}
-                onDelete={handleDeleteDashboard}
+                onDelete={openDeleteConfirmation}
                 onUpdate={handleUpdateCard}
               />
             </div>
@@ -292,6 +291,14 @@ function Dashboards() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleCreateDashboard}
+      />
+
+      <ConfirmModal 
+        isOpen={confirmModalState.isOpen}
+        onClose={() => setConfirmModalState({ isOpen: false, onConfirm: () => {} })}
+        onConfirm={confirmModalState.onConfirm}
+        title="Confirmar Exclusão"
+        message="Tem a certeza que deseja apagar este card? Esta ação não pode ser desfeita."
       />
     </div>
   );

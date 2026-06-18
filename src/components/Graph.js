@@ -3,7 +3,7 @@ import Chart from 'react-apexcharts';
 import { getQuoteData } from '../services/api';
 
 const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period = '1M', refreshTrigger = 0 }) => {
-  const { chartType = 'candlestick', assetType = 'stock' } = config;
+  const { chartType = 'candlestick', assetType = 'stock', cor = '#00b746' } = config;
   
   const [rawData, setRawData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -103,18 +103,20 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
     if (!rawData || rawData.length === 0) return [{ name: 'Preço', data: [] }];
 
     const formattedData = rawData.map(item => {
-      if (chartType === 'candlestick') {
-        return { x: item.x, y: item.y }; 
-      } else {
-        return { x: item.x, y: item.y[3] }; 
+      // Para candlestick, usamos o array [O, H, L, C]
+      if (chartType === 'candlestick' && Array.isArray(item.y)) {
+        return { x: item.x, y: item.y };
       }
+      // Para os outros tipos, usamos apenas o valor de fechamento (o 4º item do array)
+      const closePrice = Array.isArray(item.y) ? item.y[3] : item.y;
+      return { x: item.x, y: closePrice };
     });
 
     return [{ name: 'Preço', data: formattedData }];
   }, [rawData, chartType]);
 
   // Cores padrões fixas
-  const UP_COLOR = '#00b746';
+  const UP_COLOR = cor;
   const DOWN_COLOR = '#ef403c';
 
   // Configurações dinâmicas baseadas no tipo de gráfico
@@ -249,6 +251,7 @@ const Graph = ({ Name = 'PETR4', config = {}, onMetadataLoaded, widgetId, period
       {/* Mostra o gráfico contanto que não tenha erro e que já existam dados para mostrar */}
       {!error && rawData.length > 0 && (
         <Chart 
+          key={`${widgetId}-${chartType}-${UP_COLOR}`}
           options={options} 
           series={series} 
           type={chartType} 
